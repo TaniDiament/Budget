@@ -75,7 +75,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="Root" Property="Background" Value="#FFFFFFFF" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.6" />
@@ -230,11 +230,6 @@
                         <StackPanel Margin="0,0,12,0">
                             <TextBlock Style="{StaticResource LabelText}" Text="Theme" Margin="0,0,0,6" />
                             <ComboBox Width="150"
-                                      Padding="12,8"
-                                      Background="{DynamicResource SurfaceAltBrush}"
-                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                      BorderBrush="{DynamicResource BorderBrushSoft}"
-                                      BorderThickness="1"
                                       ItemsSource="{Binding ThemeOptions}"
                                       SelectedItem="{Binding SelectedThemeMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
@@ -274,121 +269,510 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="18" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <TabControl Grid.Row="2"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Margin="0,2,0,0">
+            <TabItem Header="Budget">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="0.85*" />
+                                </Grid.ColumnDefinitions>
 
-                <StackPanel>
-                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Budget line items" />
-                    <TextBlock Margin="0,8,0,0"
-                               Style="{StaticResource SubtleText}"
-                               FontSize="14"
-                               Text="Add as many lines as you want. The list updates your remaining budget instantly." />
-                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Add a line item" />
+                                    <TextBlock Margin="0,8,0,18"
+                                               Style="{StaticResource SubtleText}"
+                                               FontSize="14"
+                                               Text="Group expenses by category and watch the category chart update automatically." />
 
-                <Grid Grid.Row="1" Margin="0,20,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2.4*" />
-                        <ColumnDefinition Width="1.1*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2.1*" />
+                                            <ColumnDefinition Width="1.2*" />
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelText}" Text="Line item name" />
-                        <TextBox Style="{StaticResource ModernTextBox}"
-                                 Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}"
-                                 FontSize="14" />
-                    </StackPanel>
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Line item name" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
 
-                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelText}" Text="Amount" />
-                        <TextBox Style="{StaticResource ModernTextBox}"
-                                 Text="{Binding NewItemAmountText, UpdateSourceTrigger=PropertyChanged}"
-                                 FontSize="14"
-                                 HorizontalContentAlignment="Right" />
-                    </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Category" />
+                                            <ComboBox IsEditable="True"
+                                                      IsTextSearchEnabled="True"
+                                                      ItemsSource="{Binding CategoryOptions}"
+                                                      Text="{Binding NewItemCategory, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
 
-                    <Button Grid.Column="2"
-                            MinWidth="150"
-                            VerticalAlignment="Bottom"
-                            Content="Add line item"
-                            Command="{Binding AddLineItemCommand}"
-                            Style="{StaticResource PrimaryButton}" />
-                </Grid>
+                                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Amount" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewItemAmountText, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalContentAlignment="Right" />
+                                        </StackPanel>
 
-                <ListView Grid.Row="3"
-                          Margin="0,22,0,0"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          ItemsSource="{Binding LineItems}"
-                          ItemContainerStyle="{StaticResource BudgetListItem}"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,0,12"
-                                    Padding="18"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    BorderBrush="{DynamicResource BorderBrushSoft}"
-                                    BorderThickness="1"
-                                    CornerRadius="20">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="3"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add item"
+                                                Command="{Binding AddLineItemCommand}"
+                                                Style="{StaticResource PrimaryButton}" />
+                                    </Grid>
+                                </StackPanel>
 
+                                <Border Grid.Column="1"
+                                        Style="{StaticResource SummaryCardStyle}"
+                                        Margin="18,0,0,0">
                                     <StackPanel>
-                                        <TextBlock FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   Text="{Binding Name}" />
-                                        <TextBlock Margin="0,4,0,0"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   Text="Recurring expense" />
+                                        <TextBlock Style="{StaticResource HeadingText}" FontSize="20" Text="Spending by category" />
+                                        <TextBlock Margin="0,6,0,16"
+                                                   Style="{StaticResource SubtleText}"
+                                                   FontSize="13"
+                                                   Text="Your categories are summarized as a simple bar chart." />
+                                        <ItemsControl ItemsSource="{Binding CategorySummaries}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,0,0,14">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       Text="{Binding Category}" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding DisplayAmount}" />
+                                                        </Grid>
+                                                        <ProgressBar Height="10"
+                                                                     Margin="0,8,0,0"
+                                                                     Maximum="100"
+                                                                     Value="{Binding Percent, Mode=OneWay}"
+                                                                     Foreground="{DynamicResource AccentBrush}"
+                                                                     Background="{DynamicResource BorderBrushSoft}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
 
-                                    <TextBlock Grid.Column="1"
-                                               Margin="18,0,18,0"
-                                               VerticalAlignment="Center"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               Text="{Binding DisplayAmount}" />
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Budget line items" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Style="{StaticResource SubtleText}"
+                                           FontSize="14"
+                                           Text="Each item is assigned to a category so you can see where your money is going." />
 
-                                    <Button Grid.Column="2"
-                                            VerticalAlignment="Center"
-                                            Command="{Binding DataContext.RemoveLineItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
-                                            CommandParameter="{Binding}"
-                                            Content="Remove"
-                                            Style="{StaticResource DangerButton}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                                <ListView Background="Transparent"
+                                          BorderThickness="0"
+                                          ItemsSource="{Binding LineItems}"
+                                          ItemContainerStyle="{StaticResource BudgetListItem}"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,12"
+                                                    Padding="18"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
 
-                <Border Grid.Row="4"
-                        Margin="0,10,0,0"
-                        Padding="16,12"
-                        Background="{DynamicResource StatusBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrushSoft}"
-                        BorderThickness="1"
-                        CornerRadius="16">
-                    <TextBlock FontSize="13"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               Text="{Binding StatusMessage}" />
-                </Border>
-            </Grid>
-        </Border>
+                                                    <StackPanel>
+                                                        <TextBlock FontSize="16"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   Text="{Binding Name}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="{Binding DisplayCategory}" />
+                                                    </StackPanel>
+
+                                                    <TextBlock Grid.Column="1"
+                                                               Margin="18,0,18,0"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="16"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               Text="{Binding DisplayAmount}" />
+
+                                                    <TextBlock Grid.Column="2"
+                                                               Margin="0,0,18,0"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               Text="Expense" />
+
+                                                    <Button Grid.Column="3"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.RemoveLineItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Style="{StaticResource DangerButton}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <TextBlock FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Text="{Binding StatusMessage}" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Goals">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="0.85*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Savings goals" />
+                                    <TextBlock Margin="0,8,0,18"
+                                               Style="{StaticResource SubtleText}"
+                                               FontSize="14"
+                                               Text="Create goals, set targets, and track how close you are to reaching them." />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2.2*" />
+                                            <ColumnDefinition Width="1.1*" />
+                                            <ColumnDefinition Width="1.1*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Goal name" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewGoalName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Target" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewGoalTargetAmountText, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalContentAlignment="Right" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Saved so far" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewGoalSavedAmountText, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalContentAlignment="Right" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="3"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add goal"
+                                                Command="{Binding AddGoalCommand}"
+                                                Style="{StaticResource PrimaryButton}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <UniformGrid Grid.Column="1" Columns="2" Rows="2" Margin="18,0,0,0">
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="0,0,12,12">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Target total" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalGoalTargetDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Saved total" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding TotalGoalSavedDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Goal progress" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding SavingsGoalProgressDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Goals count" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding SavingsGoals.Count}" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Goal progress chart" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Style="{StaticResource SubtleText}"
+                                           FontSize="14"
+                                           Text="Each goal shows a live progress bar against its target." />
+
+                                <ItemsControl ItemsSource="{Binding SavingsGoals}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,14"
+                                                    Padding="18"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel>
+                                                        <TextBlock FontSize="16"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   Text="{Binding Name}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="{Binding SavedDisplay, StringFormat=Saved {0}}" />
+                                                        <ProgressBar Height="10"
+                                                                     Margin="0,10,0,0"
+                                                                     Maximum="100"
+                                                                     Value="{Binding ProgressPercent, Mode=OneWay}"
+                                                                     Foreground="{DynamicResource AccentBrush}"
+                                                                     Background="{DynamicResource BorderBrushSoft}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" Margin="18,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   Text="{Binding TargetDisplay}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="{Binding ProgressDisplay, StringFormat=Progress {0}}" />
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.RemoveGoalCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Style="{StaticResource DangerButton}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Income">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="0.85*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Monthly income tracker" />
+                                    <TextBlock Margin="0,8,0,18"
+                                               Style="{StaticResource SubtleText}"
+                                               FontSize="14"
+                                               Text="Track your monthly income over time and compare it with your budget." />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.3*" />
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Month" />
+                                            <DatePicker SelectedDate="{Binding NewIncomeMonth, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Income" />
+                                            <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Text="{Binding NewIncomeAmountText, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalContentAlignment="Right" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add month"
+                                                Command="{Binding AddIncomeEntryCommand}"
+                                                Style="{StaticResource PrimaryButton}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <UniformGrid Grid.Column="1" Columns="2" Rows="2" Margin="18,0,0,0">
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="0,0,12,12">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Records" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding IncomeEntries.Count}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Latest income" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding LatestIncomeDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Total tracked" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding MonthlyIncomeHistoryTotalDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource LabelText}" Text="Average" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyIncomeHistoryAverageDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Income over time chart" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Style="{StaticResource SubtleText}"
+                                           FontSize="14"
+                                           Text="Monthly income is shown as a simple bar chart so trends are easy to spot." />
+
+                                <ItemsControl ItemsSource="{Binding IncomeTrendItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,14">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               Text="{Binding MonthLabel}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               Text="{Binding DisplayAmount}" />
+                                                </Grid>
+                                                <ProgressBar Height="10"
+                                                             Margin="0,8,0,0"
+                                                             Maximum="100"
+                                                             Value="{Binding Percent, Mode=OneWay}"
+                                                             Foreground="{DynamicResource AccentBrush}"
+                                                             Background="{DynamicResource BorderBrushSoft}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Income records" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Style="{StaticResource SubtleText}"
+                                           FontSize="14"
+                                           Text="Use this list to manage the months you have entered." />
+
+                                <ListView Background="Transparent"
+                                          BorderThickness="0"
+                                          ItemsSource="{Binding IncomeEntries}"
+                                          ItemContainerStyle="{StaticResource BudgetListItem}"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,12"
+                                                    Padding="18"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel>
+                                                        <TextBlock FontSize="16"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   Text="{Binding MonthLabel}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="Monthly income entry" />
+                                                    </StackPanel>
+
+                                                    <TextBlock Grid.Column="1"
+                                                               Margin="18,0,18,0"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="16"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               Text="{Binding DisplayAmount}" />
+
+                                                    <Button Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.RemoveIncomeEntryCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Style="{StaticResource DangerButton}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
 

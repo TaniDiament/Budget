@@ -10,6 +10,8 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="..\Models\BudgetState.cs" Link="Models\BudgetState.cs" />
+    <Compile Include="..\Models\SavingsGoalState.cs" Link="Models\SavingsGoalState.cs" />
+    <Compile Include="..\Models\IncomeEntryState.cs" Link="Models\IncomeEntryState.cs" />
     <Compile Include="..\Models\ThemeMode.cs" Link="Models\ThemeMode.cs" />
     <Compile Include="..\Models\ThemeSettings.cs" Link="Models\ThemeSettings.cs" />
     <Compile Include="..\Models\WindowPlacement.cs" Link="Models\WindowPlacement.cs" />

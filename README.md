@@ -12,6 +12,9 @@ Simple easy to use budgeting app for Windows.
 - Remembers the last window size and position
 - Import and export budget data as JSON or CSV
 - Choose Light, Dark, or System theme from inside the app
+- Add categories to budget items and see spending by category charts
+- Track savings goals on their own page with progress bars
+- Track monthly income over time on its own page with an income chart
 
 ## Create a downloadable Windows build
 Run the publish script to generate a self-contained single-file package:
@@ -63,4 +66,9 @@ Use the Theme dropdown in the top-right area of the app to switch between:
 - `Light`
 - `Dark`
 - `System` (uses your Windows theme)
+
+## App pages
+- **Budget**: monthly take-home pay, budget items, and category chart
+- **Goals**: savings goals and progress tracking
+- **Income**: monthly income history and chart
 

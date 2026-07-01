@@ -35,8 +35,29 @@ public sealed class BudgetStateStore
 
             var json = File.ReadAllText(_stateFilePath);
             state = JsonSerializer.Deserialize<BudgetState>(json, SerializerOptions) ?? new BudgetState();
-            state.MonthlyTakeHomePayText ??= "0";
+            if (string.IsNullOrWhiteSpace(state.MonthlyTakeHomePayText))
+            {
+                state.MonthlyTakeHomePayText = "0";
+            }
             state.LineItems ??= new BudgetState().LineItems;
+            state.SavingsGoals ??= new BudgetState().SavingsGoals;
+            state.IncomeEntries ??= new BudgetState().IncomeEntries;
+
+            foreach (var item in state.LineItems)
+            {
+                item.Name ??= string.Empty;
+                item.Category ??= string.Empty;
+            }
+
+            foreach (var goal in state.SavingsGoals)
+            {
+                goal.Name ??= string.Empty;
+            }
+
+            foreach (var entry in state.IncomeEntries)
+            {
+                entry.MonthKey ??= string.Empty;
+            }
             return true;
         }
         catch

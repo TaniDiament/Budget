@@ -43,10 +43,18 @@ public partial class App : Application
 		base.OnExit(e);
 	}
 
+	private bool _isHandlingFatalError;
+
 	private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
 	{
-		ShowFatalError(e.Exception);
 		e.Handled = true;
+		if (_isHandlingFatalError)
+		{
+			return;
+		}
+
+		_isHandlingFatalError = true;
+		ShowFatalError(e.Exception);
 		Shutdown(-1);
 	}
 

@@ -50,13 +50,28 @@ try
     state.LineItems.Add(new BudgetLineItemState
     {
         Name = "Rent",
+        Category = "Housing",
         Amount = 1500m
     });
 
     state.LineItems.Add(new BudgetLineItemState
     {
         Name = "Internet",
+        Category = "Utilities",
         Amount = 79.99m
+    });
+
+    state.SavingsGoals.Add(new SavingsGoalState
+    {
+        Name = "Emergency Fund",
+        TargetAmount = 5000m,
+        SavedAmount = 1200m
+    });
+
+    state.IncomeEntries.Add(new IncomeEntryState
+    {
+        MonthKey = "2026-07",
+        Amount = 4200.50m
     });
 
     if (!store.Save(state))
@@ -89,6 +104,21 @@ try
         throw new InvalidOperationException("Second line item did not round-trip correctly.");
     }
 
+    if (loaded.LineItems[0].Category != "Housing" || loaded.LineItems[1].Category != "Utilities")
+    {
+        throw new InvalidOperationException("Line item categories did not round-trip correctly.");
+    }
+
+    if (loaded.SavingsGoals.Count != 1 || loaded.SavingsGoals[0].Name != "Emergency Fund" || loaded.SavingsGoals[0].SavedAmount != 1200m)
+    {
+        throw new InvalidOperationException("Savings goals did not round-trip correctly.");
+    }
+
+    if (loaded.IncomeEntries.Count != 1 || loaded.IncomeEntries[0].MonthKey != "2026-07" || loaded.IncomeEntries[0].Amount != 4200.50m)
+    {
+        throw new InvalidOperationException("Income entries did not round-trip correctly.");
+    }
+
     var tempFolder = Path.Combine(Path.GetTempPath(), "budget-exchange-tests");
     Directory.CreateDirectory(tempFolder);
 
@@ -109,6 +139,16 @@ try
     if (importedCsv.MonthlyTakeHomePayText != state.MonthlyTakeHomePayText || importedCsv.LineItems.Count != state.LineItems.Count)
     {
         throw new InvalidOperationException("CSV export/import did not round-trip correctly.");
+    }
+
+    if (importedJson.SavingsGoals.Count != state.SavingsGoals.Count || importedJson.IncomeEntries.Count != state.IncomeEntries.Count)
+    {
+        throw new InvalidOperationException("JSON export/import lost goal or income history data.");
+    }
+
+    if (importedCsv.SavingsGoals.Count != state.SavingsGoals.Count || importedCsv.IncomeEntries.Count != state.IncomeEntries.Count)
+    {
+        throw new InvalidOperationException("CSV export/import lost goal or income history data.");
     }
 
     var placement = new WindowPlacement

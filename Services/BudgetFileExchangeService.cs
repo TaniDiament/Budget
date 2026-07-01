@@ -41,12 +41,22 @@ public sealed class BudgetFileExchangeService
     private static string SerializeCsv(BudgetState state)
     {
         using var writer = new StringWriter(CultureInfo.InvariantCulture);
-        writer.WriteLine("Type,Name,Amount");
-        writer.WriteLine($"Income,Monthly Take-Home Pay,{EscapeCsv(state.MonthlyTakeHomePayText)}");
+        writer.WriteLine("Type,Name,Category,MonthKey,TargetAmount,SavedAmount,Amount");
+        writer.WriteLine(WriteCsvRow("Income", "Monthly Take-Home Pay", string.Empty, string.Empty, string.Empty, string.Empty, state.MonthlyTakeHomePayText));
 
         foreach (var item in state.LineItems)
         {
-            writer.WriteLine($"Expense,{EscapeCsv(item.Name)},{item.Amount.ToString(CultureInfo.InvariantCulture)}");
+            writer.WriteLine(WriteCsvRow("Expense", item.Name, item.Category, string.Empty, string.Empty, string.Empty, item.Amount.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        foreach (var goal in state.SavingsGoals)
+        {
+            writer.WriteLine(WriteCsvRow("Goal", goal.Name, string.Empty, string.Empty, goal.TargetAmount.ToString(CultureInfo.InvariantCulture), goal.SavedAmount.ToString(CultureInfo.InvariantCulture), string.Empty));
+        }
+
+        foreach (var entry in state.IncomeEntries)
+        {
+            writer.WriteLine(WriteCsvRow("IncomeEntry", string.Empty, string.Empty, entry.MonthKey, string.Empty, string.Empty, entry.Amount.ToString(CultureInfo.InvariantCulture)));
         }
 
         return writer.ToString();
@@ -81,7 +91,11 @@ public sealed class BudgetFileExchangeService
 
             var type = fields.ElementAtOrDefault(0)?.Trim() ?? string.Empty;
             var name = fields.ElementAtOrDefault(1)?.Trim() ?? string.Empty;
-            var amountText = fields.ElementAtOrDefault(2)?.Trim() ?? string.Empty;
+            var category = fields.ElementAtOrDefault(2)?.Trim() ?? string.Empty;
+            var monthKey = fields.ElementAtOrDefault(3)?.Trim() ?? string.Empty;
+            var targetText = fields.ElementAtOrDefault(4)?.Trim() ?? string.Empty;
+            var savedText = fields.ElementAtOrDefault(5)?.Trim() ?? string.Empty;
+            var amountText = fields.ElementAtOrDefault(6)?.Trim() ?? string.Empty;
 
             if (string.Equals(type, "Income", StringComparison.OrdinalIgnoreCase))
             {
@@ -91,6 +105,57 @@ public sealed class BudgetFileExchangeService
 
             if (!string.Equals(type, "Expense", StringComparison.OrdinalIgnoreCase))
             {
+                if (string.Equals(type, "Goal", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        continue;
+                    }
+
+                    if (!decimal.TryParse(targetText, NumberStyles.Currency, CultureInfo.InvariantCulture, out var targetAmount) &&
+                        !decimal.TryParse(targetText, NumberStyles.Currency, CultureInfo.CurrentCulture, out targetAmount))
+                    {
+                        targetAmount = 0m;
+                    }
+
+                    if (!decimal.TryParse(savedText, NumberStyles.Currency, CultureInfo.InvariantCulture, out var savedAmount) &&
+                        !decimal.TryParse(savedText, NumberStyles.Currency, CultureInfo.CurrentCulture, out savedAmount))
+                    {
+                        savedAmount = 0m;
+                    }
+
+                    state.SavingsGoals.Add(new SavingsGoalState
+                    {
+                        Name = name,
+                        TargetAmount = targetAmount,
+                        SavedAmount = savedAmount
+                    });
+
+                    continue;
+                }
+
+                if (string.Equals(type, "IncomeEntry", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.IsNullOrWhiteSpace(monthKey))
+                    {
+                        continue;
+                    }
+
+                    if (!decimal.TryParse(amountText, NumberStyles.Currency, CultureInfo.InvariantCulture, out var incomeAmount) &&
+                        !decimal.TryParse(amountText, NumberStyles.Currency, CultureInfo.CurrentCulture, out incomeAmount))
+                    {
+                        incomeAmount = 0m;
+                    }
+
+                    state.IncomeEntries.Add(new IncomeEntryState
+                    {
+                        MonthKey = monthKey,
+                        Amount = incomeAmount
+                    });
+
+                    continue;
+                }
+
                 continue;
             }
 
@@ -108,6 +173,7 @@ public sealed class BudgetFileExchangeService
             state.LineItems.Add(new BudgetLineItemState
             {
                 Name = name,
+                Category = category,
                 Amount = amount
             });
         }
@@ -123,6 +189,11 @@ public sealed class BudgetFileExchangeService
         }
 
         return value;
+    }
+
+    private static string WriteCsvRow(params string[] fields)
+    {
+        return string.Join(",", fields.Select(EscapeCsv));
     }
 }
 
