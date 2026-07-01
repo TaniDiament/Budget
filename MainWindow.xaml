@@ -1,0 +1,381 @@
+<Window x:Class="Budget.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Budget"
+        Icon="pack://application:,,,/Assets/Budget.ico"
+        Width="1180"
+        Height="800"
+        MinWidth="960"
+        MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource AppBackgroundBrush}"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="ClearType">
+    <Window.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="Padding" Value="24" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.16" Color="#1A0F172A" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SummaryCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+            <Setter Property="CornerRadius" Value="22" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Background" Value="#FFF9FBFE" />
+        </Style>
+
+        <Style x:Key="HeadingText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="SubtleText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        </Style>
+
+        <Style x:Key="LabelText" TargetType="TextBlock" BasedOn="{StaticResource SubtleText}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Root" Property="Background" Value="#FFFFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="18,12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{StaticResource AccentBrushDark}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#FFFEE2E2" />
+            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFFECACA" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ToolbarButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#FFE2E8F0" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFD7E0EA" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BudgetListItem" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*" />
+                    <ColumnDefinition Width="0.8*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Style="{StaticResource HeadingText}" Text="Budget planner" />
+                    <TextBlock Margin="0,10,0,0"
+                               Style="{StaticResource SubtleText}"
+                               FontSize="15"
+                               Text="Enter your monthly take-home pay, then add every recurring expense and savings goal below." />
+
+                    <StackPanel Margin="0,24,0,0" MaxWidth="420">
+                        <TextBlock Style="{StaticResource LabelText}" Text="Monthly take-home pay" />
+                        <TextBox Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding MonthlyTakeHomePayText, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="18"
+                                 HorizontalContentAlignment="Left" />
+                    </StackPanel>
+
+                    <TextBlock Margin="0,18,0,0"
+                               Style="{StaticResource SubtleText}"
+                               FontSize="13"
+                               Text="Tip: use currency values like 3200, 3200.50, or $3,200.50." />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,14">
+                        <Button Content="Import" Click="ImportBudgetClick" Style="{StaticResource ToolbarButton}" />
+                        <Button Content="Export" Click="ExportBudgetClick" Style="{StaticResource ToolbarButton}" Margin="0" />
+                    </StackPanel>
+
+                    <UniformGrid Columns="2" Rows="2">
+                        <Border Style="{StaticResource SummaryCardStyle}" Margin="0,0,12,12">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource LabelText}" Text="Take-home pay" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding MonthlyTakeHomePayDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource LabelText}" Text="Planned deductions" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding TotalDeductionsDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource LabelText}" Text="Leftover" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" Text="{Binding LeftoverDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource LabelText}" Text="Usage" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Text="{Binding BudgetUsageDisplay}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Budget line items" />
+                    <TextBlock Margin="0,8,0,0"
+                               Style="{StaticResource SubtleText}"
+                               FontSize="14"
+                               Text="Add as many lines as you want. The list updates your remaining budget instantly." />
+                </StackPanel>
+
+                <Grid Grid.Row="1" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.4*" />
+                        <ColumnDefinition Width="1.1*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Margin="0,0,14,0">
+                        <TextBlock Style="{StaticResource LabelText}" Text="Line item name" />
+                        <TextBox Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                        <TextBlock Style="{StaticResource LabelText}" Text="Amount" />
+                        <TextBox Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding NewItemAmountText, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14"
+                                 HorizontalContentAlignment="Right" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            MinWidth="150"
+                            VerticalAlignment="Bottom"
+                            Content="Add line item"
+                            Command="{Binding AddLineItemCommand}"
+                            Style="{StaticResource PrimaryButton}" />
+                </Grid>
+
+                <ListView Grid.Row="3"
+                          Margin="0,22,0,0"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          ItemsSource="{Binding LineItems}"
+                          ItemContainerStyle="{StaticResource BudgetListItem}"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,12"
+                                    Padding="18"
+                                    Background="{StaticResource SurfaceAltBrush}"
+                                    BorderBrush="{StaticResource BorderBrushSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="20">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   Text="{Binding Name}" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Text="Recurring expense" />
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1"
+                                               Margin="18,0,18,0"
+                                               VerticalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               Text="{Binding DisplayAmount}" />
+
+                                    <Button Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            Command="{Binding DataContext.RemoveLineItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                            CommandParameter="{Binding}"
+                                            Content="Remove"
+                                            Style="{StaticResource DangerButton}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <Border Grid.Row="4"
+                        Margin="0,10,0,0"
+                        Padding="16,12"
+                        Background="#FFF8FAFD"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="1"
+                        CornerRadius="16">
+                    <TextBlock FontSize="13"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Text="{Binding StatusMessage}" />
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+

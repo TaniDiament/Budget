@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\Models\BudgetState.cs" Link="Models\BudgetState.cs" />
+    <Compile Include="..\Models\WindowPlacement.cs" Link="Models\WindowPlacement.cs" />
+    <Compile Include="..\Services\BudgetStateStore.cs" Link="Services\BudgetStateStore.cs" />
+    <Compile Include="..\Services\BudgetFileExchangeService.cs" Link="Services\BudgetFileExchangeService.cs" />
+    <Compile Include="..\Services\WindowPlacementStore.cs" Link="Services\WindowPlacementStore.cs" />
+  </ItemGroup>
+</Project>
+
