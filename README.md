@@ -21,6 +21,28 @@ Run the publish script to generate a self-contained single-file package:
 
 The zipped download will be created at `dist\Budget-win-x64.zip`.
 
+## Put it on GitHub for others to download
+If you want other people to install the app from GitHub, publish a release and upload the ZIP file:
+
+1. Run the publish script:
+   ```powershell
+   .\publish.ps1
+   ```
+2. Go to your GitHub repository.
+3. Open **Releases**.
+4. Create a new release.
+5. Attach `dist\Budget-win-x64.zip` as the downloadable file.
+6. Publish the release.
+
+## How someone downloads and runs it from GitHub
+1. Open the GitHub repository.
+2. Click **Releases**.
+3. Download the latest `Budget-win-x64.zip` file.
+4. Extract the ZIP file to a folder on their computer.
+5. Double-click `Budget.exe` inside the extracted folder.
+
+If Windows shows a security prompt, choose **More info** and then **Run anyway** if you trust the app.
+
 ## Run it
 ```powershell
 dotnet build .\Budget.csproj
