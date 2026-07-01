@@ -11,21 +11,21 @@
         MinWidth="960"
         MinHeight="680"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource AppBackgroundBrush}"
+        Background="{DynamicResource AppBackgroundBrush}"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="ClearType">
     <Window.Resources>
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="28" />
             <Setter Property="Padding" Value="24" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.16" Color="#1A0F172A" />
+                    <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.16" Color="{DynamicResource CardShadowColor}" />
                 </Setter.Value>
             </Setter>
         </Style>
@@ -33,17 +33,17 @@
         <Style x:Key="SummaryCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
             <Setter Property="CornerRadius" Value="22" />
             <Setter Property="Padding" Value="20" />
-            <Setter Property="Background" Value="#FFF9FBFE" />
+            <Setter Property="Background" Value="{DynamicResource SummaryBackgroundBrush}" />
         </Style>
 
         <Style x:Key="HeadingText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="FontSize" Value="28" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
         <Style x:Key="SubtleText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
         <Style x:Key="LabelText" TargetType="TextBlock" BasedOn="{StaticResource SubtleText}">
@@ -54,9 +54,9 @@
         </Style>
 
         <Style x:Key="ModernTextBox" TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="FontSize" Value="14" />
@@ -74,7 +74,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="Root" Property="Background" Value="#FFFFFFFF" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -87,7 +87,7 @@
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="18,12" />
@@ -104,7 +104,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{StaticResource AccentBrushDark}" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentBrushDark}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.9" />
@@ -119,8 +119,8 @@
         </Style>
 
         <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Background" Value="#FFFEE2E2" />
-            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+            <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
             <Setter Property="Padding" Value="14,9" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Template">
@@ -134,7 +134,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="#FFFECACA" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource DangerHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.9" />
@@ -149,8 +149,8 @@
         </Style>
 
         <Style x:Key="ToolbarButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Background" Value="#FFE2E8F0" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ToolbarBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderThickness" Value="0" />
@@ -166,7 +166,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="#FFD7E0EA" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ToolbarHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.9" />
@@ -227,33 +227,46 @@
 
                 <StackPanel Grid.Column="1" Margin="24,0,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,14">
-                        <Button Content="Import" Click="ImportBudgetClick" Style="{StaticResource ToolbarButton}" />
-                        <Button Content="Export" Click="ExportBudgetClick" Style="{StaticResource ToolbarButton}" Margin="0" />
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource LabelText}" Text="Theme" Margin="0,0,0,6" />
+                            <ComboBox Width="150"
+                                      Padding="12,8"
+                                      Background="{DynamicResource SurfaceAltBrush}"
+                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                      BorderBrush="{DynamicResource BorderBrushSoft}"
+                                      BorderThickness="1"
+                                      ItemsSource="{Binding ThemeOptions}"
+                                      SelectedItem="{Binding SelectedThemeMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
+                            <Button Content="Import" Click="ImportBudgetClick" Style="{StaticResource ToolbarButton}" />
+                            <Button Content="Export" Click="ExportBudgetClick" Style="{StaticResource ToolbarButton}" Margin="0" />
+                        </StackPanel>
                     </StackPanel>
 
                     <UniformGrid Columns="2" Rows="2">
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="0,0,12,12">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Take-home pay" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding MonthlyTakeHomePayDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyTakeHomePayDisplay}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Planned deductions" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding TotalDeductionsDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalDeductionsDisplay}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Leftover" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" Text="{Binding LeftoverDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding LeftoverDisplay}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Usage" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Text="{Binding BudgetUsageDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding BudgetUsageDisplay}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -321,8 +334,8 @@
                         <DataTemplate>
                             <Border Margin="0,0,0,12"
                                     Padding="18"
-                                    Background="{StaticResource SurfaceAltBrush}"
-                                    BorderBrush="{StaticResource BorderBrushSoft}"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushSoft}"
                                     BorderThickness="1"
                                     CornerRadius="20">
                                 <Grid>
@@ -335,11 +348,11 @@
                                     <StackPanel>
                                         <TextBlock FontSize="16"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    Text="{Binding Name}" />
                                         <TextBlock Margin="0,4,0,0"
                                                    FontSize="12"
-                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                                    Text="Recurring expense" />
                                     </StackPanel>
 
@@ -348,7 +361,7 @@
                                                VerticalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                Text="{Binding DisplayAmount}" />
 
                                     <Button Grid.Column="2"
@@ -366,12 +379,12 @@
                 <Border Grid.Row="4"
                         Margin="0,10,0,0"
                         Padding="16,12"
-                        Background="#FFF8FAFD"
-                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        Background="{DynamicResource StatusBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrushSoft}"
                         BorderThickness="1"
                         CornerRadius="16">
                     <TextBlock FontSize="13"
-                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                Text="{Binding StatusMessage}" />
                 </Border>
             </Grid>

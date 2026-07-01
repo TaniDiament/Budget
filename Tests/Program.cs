@@ -15,6 +15,13 @@ var placementStatePath = Path.Combine(
     "window-state.json");
 var placementBackupPath = Path.Combine(Path.GetTempPath(), "budget-window-state-backup.json");
 var hadPlacementExisting = File.Exists(placementStatePath);
+var themeSettingsStore = new ThemeSettingsStore();
+var themeSettingsPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "Budget",
+    "theme-settings.json");
+var themeSettingsBackupPath = Path.Combine(Path.GetTempPath(), "budget-theme-settings-backup.json");
+var hadThemeSettingsExisting = File.Exists(themeSettingsPath);
 
 if (hadExisting)
 {
@@ -24,6 +31,11 @@ if (hadExisting)
 if (hadPlacementExisting)
 {
     File.Copy(placementStatePath, placementBackupPath, true);
+}
+
+if (hadThemeSettingsExisting)
+{
+    File.Copy(themeSettingsPath, themeSettingsBackupPath, true);
 }
 
 try
@@ -123,6 +135,14 @@ try
         throw new InvalidOperationException("Window placement did not round-trip correctly.");
     }
 
+    themeSettingsStore.Save(new ThemeSettings { ThemeMode = ThemeMode.Dark });
+    var loadedThemeSettings = themeSettingsStore.Load();
+
+    if (loadedThemeSettings.ThemeMode != ThemeMode.Dark)
+    {
+        throw new InvalidOperationException("Theme settings did not round-trip correctly.");
+    }
+
     Console.WriteLine("Persistence smoke test passed.");
 }
 finally
@@ -145,6 +165,15 @@ finally
         File.Delete(placementStatePath);
     }
 
+    if (hadThemeSettingsExisting)
+    {
+        File.Copy(themeSettingsBackupPath, themeSettingsPath, true);
+    }
+    else if (File.Exists(themeSettingsPath))
+    {
+        File.Delete(themeSettingsPath);
+    }
+
     if (File.Exists(backupPath))
     {
         File.Delete(backupPath);
@@ -153,6 +182,11 @@ finally
     if (File.Exists(placementBackupPath))
     {
         File.Delete(placementBackupPath);
+    }
+
+    if (File.Exists(themeSettingsBackupPath))
+    {
+        File.Delete(themeSettingsBackupPath);
     }
 }
 

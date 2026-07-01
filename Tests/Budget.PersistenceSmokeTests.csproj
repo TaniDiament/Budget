@@ -10,9 +10,12 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="..\Models\BudgetState.cs" Link="Models\BudgetState.cs" />
+    <Compile Include="..\Models\ThemeMode.cs" Link="Models\ThemeMode.cs" />
+    <Compile Include="..\Models\ThemeSettings.cs" Link="Models\ThemeSettings.cs" />
     <Compile Include="..\Models\WindowPlacement.cs" Link="Models\WindowPlacement.cs" />
     <Compile Include="..\Services\BudgetStateStore.cs" Link="Services\BudgetStateStore.cs" />
     <Compile Include="..\Services\BudgetFileExchangeService.cs" Link="Services\BudgetFileExchangeService.cs" />
+    <Compile Include="..\Services\ThemeSettingsStore.cs" Link="Services\ThemeSettingsStore.cs" />
     <Compile Include="..\Services\WindowPlacementStore.cs" Link="Services\WindowPlacementStore.cs" />
   </ItemGroup>
 </Project>

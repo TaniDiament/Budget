@@ -1,19 +1,27 @@
 using System;
 using System.Windows;
 using System.Threading.Tasks;
+using Budget.Models;
+using Budget.Services;
+using Microsoft.Win32;
 
 namespace Budget;
 
 public partial class App : Application
 {
+	private readonly ThemeSettingsStore _themeSettingsStore = new();
+
 	protected override void OnStartup(StartupEventArgs e)
 	{
 		DispatcherUnhandledException += OnDispatcherUnhandledException;
 		AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 		TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+		SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
 		try
 		{
+			var themeMode = _themeSettingsStore.Load().ThemeMode;
+			ThemeManager.ApplyTheme(themeMode);
 			base.OnStartup(e);
 			var window = new MainWindow();
 			MainWindow = window;
@@ -24,6 +32,15 @@ public partial class App : Application
 			ShowFatalError(ex);
 			Shutdown(-1);
 		}
+	}
+
+	protected override void OnExit(ExitEventArgs e)
+	{
+		SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
+		DispatcherUnhandledException -= OnDispatcherUnhandledException;
+		AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+		TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+		base.OnExit(e);
 	}
 
 	private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
@@ -45,6 +62,16 @@ public partial class App : Application
 	{
 		ShowFatalError(e.Exception);
 		e.SetObserved();
+	}
+
+	private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+	{
+		if (ThemeManager.CurrentThemeMode != ThemeMode.System)
+		{
+			return;
+		}
+
+		Dispatcher.Invoke(() => ThemeManager.ApplyTheme(ThemeMode.System));
 	}
 
 	private static void ShowFatalError(Exception exception)

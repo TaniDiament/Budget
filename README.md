@@ -11,6 +11,7 @@ Simple easy to use budgeting app for Windows.
 - Includes a branded app icon
 - Remembers the last window size and position
 - Import and export budget data as JSON or CSV
+- Choose Light, Dark, or System theme from inside the app
 
 ## Create a downloadable Windows build
 Run the publish script to generate a self-contained single-file package:
@@ -56,4 +57,10 @@ dotnet run --project .\Tests\Budget.PersistenceSmokeTests.csproj
 
 ## Export or import your budget
 Use the Import and Export buttons in the app to move data between machines or make backups.
+
+## Theme selection
+Use the Theme dropdown in the top-right area of the app to switch between:
+- `Light`
+- `Dark`
+- `System` (uses your Windows theme)
 

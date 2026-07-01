@@ -11,20 +11,25 @@ namespace Budget.ViewModels;
 public sealed class MainViewModel : ObservableObject
 {
     private readonly BudgetStateStore _stateStore = new();
+    private readonly ThemeSettingsStore _themeSettingsStore = new();
     private bool _isRestoringState;
     private string _monthlyTakeHomePayText = "0";
     private string _newItemName = string.Empty;
     private string _newItemAmountText = string.Empty;
     private string _statusMessage = "Add a line item to get started.";
+    private ThemeMode _selectedThemeMode;
 
     public MainViewModel()
     {
         AddLineItemCommand = new RelayCommand(_ => AddLineItem(), _ => CanAddLineItem());
         RemoveLineItemCommand = new RelayCommand(parameter => RemoveLineItem(parameter as BudgetLineItem));
 
+        ThemeOptions = Enum.GetValues<ThemeMode>();
+        _selectedThemeMode = _themeSettingsStore.Load().ThemeMode;
         LineItems.CollectionChanged += OnLineItemsChanged;
         RestoreSavedState();
         RefreshBudgetSummary();
+        ThemeManager.ApplyTheme(_selectedThemeMode);
     }
 
     public ObservableCollection<BudgetLineItem> LineItems { get; } = new();
@@ -32,6 +37,21 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand AddLineItemCommand { get; }
 
     public RelayCommand RemoveLineItemCommand { get; }
+
+    public ThemeMode[] ThemeOptions { get; }
+
+    public ThemeMode SelectedThemeMode
+    {
+        get => _selectedThemeMode;
+        set
+        {
+            if (SetProperty(ref _selectedThemeMode, value))
+            {
+                ThemeManager.ApplyTheme(value);
+                _themeSettingsStore.Save(new ThemeSettings { ThemeMode = value });
+            }
+        }
+    }
 
     public string MonthlyTakeHomePayText
     {
