@@ -24,6 +24,7 @@
         <SolidColorBrush x:Key="DangerHoverBrush" Color="#FFFECACA" />
         <SolidColorBrush x:Key="SummaryBackgroundBrush" Color="#FFF9FBFE" />
         <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#FFF8FAFD" />
+        <SolidColorBrush x:Key="ChartLineBrush" Color="#FF3B82F6" />
         <Color x:Key="CardShadowColor">#1A0F172A</Color>
 
         <!-- ================= Themed control styles (implicit, app-wide) ================= -->

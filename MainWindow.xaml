@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Budget.Controls"
         mc:Ignorable="d"
         Title="Budget"
         Icon="pack://application:,,,/Assets/Budget.ico"
@@ -628,6 +629,7 @@
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel HorizontalAlignment="Left">
@@ -648,23 +650,44 @@
                                                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Planned" />
                                                         <TextBox Style="{StaticResource InlineEditBox}"
-                                                                 Width="120"
+                                                                 Width="110"
                                                                  FontWeight="SemiBold"
                                                                  HorizontalContentAlignment="Right"
                                                                  Text="{Binding PlannedAmountText}"
                                                                  ToolTip="Planned amount — click to edit" />
                                                     </StackPanel>
 
-                                                    <StackPanel Grid.Column="2" Margin="10,0,18,0" VerticalAlignment="Center">
+                                                    <StackPanel Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Spent" />
                                                         <TextBox Style="{StaticResource InlineEditBox}"
-                                                                 Width="120"
+                                                                 Width="110"
                                                                  HorizontalContentAlignment="Right"
                                                                  Text="{Binding ActualAmountText}"
-                                                                 ToolTip="Spent so far this month — click to edit" />
+                                                                 ToolTip="Total spent so far this month — click to edit" />
                                                     </StackPanel>
 
-                                                    <Button Grid.Column="3"
+                                                    <StackPanel Grid.Column="3" Margin="18,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" Text="Add spending" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBox Style="{StaticResource InlineEditBox}"
+                                                                     Width="100"
+                                                                     BorderBrush="{DynamicResource BorderBrushSoft}"
+                                                                     HorizontalContentAlignment="Right"
+                                                                     Tag="0.00"
+                                                                     Text="{Binding SpendingText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     ToolTip="Amount to add to this item's Spent total" />
+                                                            <Button Margin="8,0,0,0"
+                                                                    Padding="14,7"
+                                                                    Content="Add"
+                                                                    FontSize="12"
+                                                                    Style="{StaticResource PrimaryButton}"
+                                                                    Command="{Binding DataContext.RecordSpendingCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip="Add this amount to what you've spent on this item" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="4"
                                                             VerticalAlignment="Center"
                                                             Command="{Binding DataContext.RemoveLineItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
                                                             CommandParameter="{Binding}"
@@ -976,11 +999,40 @@
 
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Income over time chart" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Income over time" />
+                                    <TextBlock Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding IncomeChangeDisplay}"
+                                               ToolTip="Latest month compared with the one before it">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IncomeChangeDirection}" Value="Up">
+                                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IncomeChangeDirection}" Value="Down">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IncomeChangeDirection}" Value="None">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
                                 <TextBlock Margin="0,8,0,18"
                                            Style="{StaticResource SubtleText}"
                                            FontSize="14"
-                                           Text="Monthly income is shown as a simple bar chart so trends are easy to spot." />
+                                           Text="Each month's income plotted like a stock ticker — hover the chart to read a month's exact amount." />
 
                                 <TextBlock Text="No income recorded yet — add a month above to see the trend.">
                                     <TextBlock.Style>
@@ -994,29 +1046,23 @@
                                     </TextBlock.Style>
                                 </TextBlock>
 
-                                <ItemsControl ItemsSource="{Binding IncomeTrendItems}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="0,0,0,14">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               Text="{Binding MonthLabel}" />
-                                                    <TextBlock Grid.Column="1"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               Text="{Binding DisplayAmount}" />
-                                                </Grid>
-                                                <ProgressBar Margin="0,8,0,0"
-                                                             Maximum="100"
-                                                             Value="{Binding Percent, Mode=OneWay}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <controls:IncomeTickerChart Height="260"
+                                                            ItemsSource="{Binding IncomeTrendItems}"
+                                                            LineBrush="{DynamicResource ChartLineBrush}"
+                                                            GridLineBrush="{DynamicResource BorderBrushSoft}"
+                                                            LabelBrush="{DynamicResource TextSecondaryBrush}"
+                                                            ValueBrush="{DynamicResource TextPrimaryBrush}"
+                                                            SurfaceBrush="{DynamicResource SurfaceBrush}">
+                                    <controls:IncomeTickerChart.Style>
+                                        <Style TargetType="controls:IncomeTickerChart">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IncomeTrendItems.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </controls:IncomeTickerChart.Style>
+                                </controls:IncomeTickerChart>
                             </StackPanel>
                         </Border>
 

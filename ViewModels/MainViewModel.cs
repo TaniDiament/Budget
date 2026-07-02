@@ -57,6 +57,7 @@ public sealed class MainViewModel : ObservableObject
         CopyPreviousMonthCommand = new RelayCommand(_ => CopyPreviousMonth(), _ => CanCopyPreviousMonth());
         UndoRemoveCommand = new RelayCommand(_ => UndoRemove());
         ContributeToGoalCommand = new RelayCommand(parameter => ContributeToGoal(parameter as SavingsGoal));
+        RecordSpendingCommand = new RelayCommand(parameter => RecordSpending(parameter as BudgetLineItem));
 
         ThemeOptions = Enum.GetValues<ThemeMode>();
         CategoryOptions = new ObservableCollection<string>(DefaultCategories);
@@ -102,6 +103,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand UndoRemoveCommand { get; }
 
     public RelayCommand ContributeToGoalCommand { get; }
+
+    public RelayCommand RecordSpendingCommand { get; }
 
     public ThemeMode[] ThemeOptions { get; }
 
@@ -354,6 +357,56 @@ public sealed class MainViewModel : ObservableObject
         .OrderBy(entry => entry.SortKey)
         .LastOrDefault()?.DisplayAmount ?? MoneyText.Format(0m);
 
+    public string IncomeChangeDisplay
+    {
+        get
+        {
+            if (LatestIncomePair() is not { } pair)
+            {
+                return string.Empty;
+            }
+
+            var difference = pair.Latest.Amount - pair.Previous.Amount;
+            if (difference == 0m)
+            {
+                return $"No change vs {pair.Previous.MonthLabel}";
+            }
+
+            var text = $"{(difference > 0m ? "▲" : "▼")} {MoneyText.Format(Math.Abs(difference))}";
+            if (pair.Previous.Amount > 0m)
+            {
+                text += $" ({Math.Abs(difference / pair.Previous.Amount) * 100m:0.#}%)";
+            }
+
+            return $"{text} vs {pair.Previous.MonthLabel}";
+        }
+    }
+
+    public string IncomeChangeDirection
+    {
+        get
+        {
+            if (LatestIncomePair() is not { } pair)
+            {
+                return "None";
+            }
+
+            var difference = pair.Latest.Amount - pair.Previous.Amount;
+            return difference > 0m ? "Up" : difference < 0m ? "Down" : "Flat";
+        }
+    }
+
+    private (IncomeEntry Latest, IncomeEntry Previous)? LatestIncomePair()
+    {
+        if (IncomeEntries.Count < 2)
+        {
+            return null;
+        }
+
+        var ordered = IncomeEntries.OrderBy(entry => entry.SortKey).ToList();
+        return (ordered[^1], ordered[^2]);
+    }
+
     public string SavingsGoalProgressDisplay
     {
         get
@@ -516,6 +569,24 @@ public sealed class MainViewModel : ObservableObject
         goal.SavedAmount += amount;
         goal.ContributionText = string.Empty;
         StatusMessage = $"Added {MoneyText.Format(amount)} to {goal.Name}.";
+    }
+
+    private void RecordSpending(BudgetLineItem? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        if (!TryParseMoney(item.SpendingText, out var amount) || amount <= 0m)
+        {
+            StatusMessage = "Enter a spent amount above zero first.";
+            return;
+        }
+
+        item.ActualAmount += amount;
+        item.SpendingText = string.Empty;
+        StatusMessage = $"Added {MoneyText.Format(amount)} spent on {item.Name} — {MoneyText.Format(item.ActualAmount)} of {MoneyText.Format(item.PlannedAmount)} used.";
     }
 
     private void AddIncomeEntry()
@@ -902,6 +973,8 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(MonthlyIncomeHistoryTotalDisplay));
         OnPropertyChanged(nameof(MonthlyIncomeHistoryAverageDisplay));
         OnPropertyChanged(nameof(LatestIncomeDisplay));
+        OnPropertyChanged(nameof(IncomeChangeDisplay));
+        OnPropertyChanged(nameof(IncomeChangeDirection));
         OnPropertyChanged(nameof(SavingsGoalProgressDisplay));
         UpdateCategoryChart();
         UpdateIncomeChart();
@@ -966,15 +1039,9 @@ public sealed class MainViewModel : ObservableObject
     {
         IncomeTrendItems.Clear();
 
-        var ordered = IncomeEntries
-            .OrderBy(entry => entry.SortKey)
-            .ToList();
-
-        var max = ordered.Count == 0 ? 0m : ordered.Max(item => item.Amount);
-        foreach (var item in ordered)
+        foreach (var item in IncomeEntries.OrderBy(entry => entry.SortKey))
         {
-            var percent = max <= 0 ? 0d : (double)((item.Amount / max) * 100m);
-            IncomeTrendItems.Add(new IncomeTrendItem(item.MonthLabel, item.Amount, percent));
+            IncomeTrendItems.Add(new IncomeTrendItem(item.MonthLabel, item.Amount));
         }
     }
 

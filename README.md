@@ -7,12 +7,13 @@ Simple easy to use budgeting app for Windows.
 - **Copy last month's plan** into an empty month with one click (spent amounts start fresh)
 - Add unlimited budget line items with a name, category, and planned amount
 - **Planned vs. actual**: each line item has a Planned and a Spent box, and the category chart shows how much of each category's budget is used (amber near the limit, red when over)
+- **Add spending as you go**: type a purchase into a line item's **Add spending** box and press **Add** to tack it onto the Spent total — just like contributing to a goal
 - Category chart also shows each category's share of your pay ("% of pay")
 - See take-home pay, planned deductions, leftover cash, and a usage meter at a glance — leftover turns red when you are over budget
 - **Edit everything in place**: click any name, category, amount, or income record to change it — no delete-and-retype
 - **Undo**: removing a line item, goal, or income record shows an Undo button in the status bar
 - Track savings goals on their own page with progress bars, editable saved/target amounts, and a **Contribute** box to put money (like this month's leftover) toward a goal
-- Track monthly income over time on its own page with an income chart
+- Track monthly income over time on its own page with a ticker-style line chart — hover any month for its exact amount, and see the latest month-over-month change at a glance
 - Automatically saves as you work and restores everything when you reopen the app
 - Remembers the last window size and position
 - Import and export budget data as JSON or CSV (older exports still import fine)
@@ -21,7 +22,7 @@ Simple easy to use budgeting app for Windows.
 ## App pages
 - **Budget**: the selected month's take-home pay, line items with planned/spent amounts, and a spending-by-category chart
 - **Goals**: savings goals with progress tracking and per-goal contributions
-- **Income**: monthly income history and chart
+- **Income**: monthly income history with a ticker-style trend chart
 
 ## Working with months
 - Use the **Budget month** selector in the header to move between months. Every summary tile, line item, and chart reflects the selected month.
@@ -30,6 +31,7 @@ Simple easy to use budgeting app for Windows.
 
 ## Tracking spending
 - Each line item has **Planned** (what you budgeted) and **Spent** (what you've actually spent so far). Click either box to edit it.
+- To log a purchase without doing the math yourself, type the amount into the item's **Add spending** box and press **Add** — it's added onto the Spent total.
 - The **Spending by category** chart fills each category's bar by how much of its planned budget is spent: blue is fine, amber means 85%+ used, red means over budget.
 
 ## Savings goals

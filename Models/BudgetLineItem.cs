@@ -8,6 +8,7 @@ public sealed class BudgetLineItem : ObservableObject
     private string _category;
     private decimal _plannedAmount;
     private decimal _actualAmount;
+    private string _spendingText = string.Empty;
 
     public BudgetLineItem(string name, string category, decimal plannedAmount, decimal actualAmount = 0m)
     {
@@ -101,6 +102,13 @@ public sealed class BudgetLineItem : ObservableObject
                 OnPropertyChanged();
             }
         }
+    }
+
+    /// <summary>Scratch input for the per-item "add spending" box; intentionally not persisted.</summary>
+    public string SpendingText
+    {
+        get => _spendingText;
+        set => SetProperty(ref _spendingText, value);
     }
 
     public string DisplayAmount => MoneyText.Format(PlannedAmount);

@@ -30,7 +30,8 @@ public static class ThemeManager
         DangerHover: Color.FromRgb(254, 202, 202),
         SummaryBackground: Color.FromRgb(249, 251, 254),
         StatusBackground: Color.FromRgb(248, 250, 253),
-        CardShadow: Color.FromArgb(26, 15, 23, 42));
+        CardShadow: Color.FromArgb(26, 15, 23, 42),
+        ChartLine: Color.FromRgb(59, 130, 246));
 
     private static readonly ThemeBrushes Dark = new(
         AppBackground: Color.FromRgb(15, 23, 42),
@@ -54,7 +55,10 @@ public static class ThemeManager
         DangerHover: Color.FromRgb(96, 23, 23),
         SummaryBackground: Color.FromRgb(17, 24, 39),
         StatusBackground: Color.FromRgb(15, 23, 42),
-        CardShadow: Color.FromArgb(110, 0, 0, 0));
+        CardShadow: Color.FromArgb(110, 0, 0, 0),
+        // A mid-tone rather than the pastel dark-mode accent: chart marks need to
+        // stay saturated on the dark surface (validated for lightness and contrast).
+        ChartLine: Color.FromRgb(76, 141, 248));
 
     public static ThemeMode CurrentThemeMode { get; private set; } = ThemeMode.System;
 
@@ -90,6 +94,7 @@ public static class ThemeManager
         ApplyBrush("DangerHoverBrush", palette.DangerHover);
         ApplyBrush("SummaryBackgroundBrush", palette.SummaryBackground);
         ApplyBrush("StatusBackgroundBrush", palette.StatusBackground);
+        ApplyBrush("ChartLineBrush", palette.ChartLine);
         Application.Current.Resources["CardShadowColor"] = palette.CardShadow;
         ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
@@ -151,7 +156,8 @@ public static class ThemeManager
         Color DangerHover,
         Color SummaryBackground,
         Color StatusBackground,
-        Color CardShadow);
+        Color CardShadow,
+        Color ChartLine);
 }
 
 
