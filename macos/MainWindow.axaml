@@ -1,0 +1,719 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Budget.Controls"
+        x:Class="Budget.MainWindow"
+        Title="Budget"
+        Icon="/Assets/Budget.ico"
+        Width="1180"
+        Height="800"
+        MinWidth="960"
+        MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppBackgroundBrush}">
+
+    <Window.Styles>
+        <!-- Page-local stand-ins for the WPF DataTriggers. -->
+        <Style Selector="TextBlock.leftoverValue">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="TextBlock.leftoverValue.over">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.summaryMessage">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.summaryMessage.over">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.deltaChip">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.deltaChip.up">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="TextBlock.deltaChip.down">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="24" RowDefinitions="Auto,20,*,Auto">
+
+        <Border Classes="card">
+            <Grid ColumnDefinitions="1.2*,0.8*">
+
+                <StackPanel>
+                    <TextBlock Classes="heading" Text="Budget planner" />
+                    <TextBlock Margin="0,10,0,0"
+                               Classes="subtle"
+                               FontSize="15"
+                               TextWrapping="Wrap"
+                               Text="Enter your monthly take-home pay, then add every recurring expense and savings goal below." />
+
+                    <StackPanel Margin="0,24,0,0" HorizontalAlignment="Left">
+                        <TextBlock Classes="label" Text="Budget month" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="toolbar"
+                                    FontSize="16"
+                                    Content="&#x2039;"
+                                    Padding="16,8"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding PreviousMonthCommand}"
+                                    ToolTip.Tip="Previous month" />
+                            <Border MinWidth="170"
+                                    Height="42"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="14"
+                                    Padding="16,0">
+                                <TextBlock VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           Text="{Binding CurrentMonthLabel}" />
+                            </Border>
+                            <Button Classes="toolbar"
+                                    FontSize="16"
+                                    Content="&#x203A;"
+                                    Padding="16,8"
+                                    Margin="8,0,0,0"
+                                    Command="{Binding NextMonthCommand}"
+                                    ToolTip.Tip="Next month" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,18,0,0" Width="420" HorizontalAlignment="Left">
+                        <TextBlock Classes="label" Text="Monthly take-home pay" />
+                        <TextBox Classes="modern"
+                                 Text="{Binding MonthlyTakeHomePayText, Mode=TwoWay}"
+                                 Watermark="e.g. $3,200"
+                                 FontSize="18" />
+                    </StackPanel>
+
+                    <TextBlock Margin="0,16,0,0"
+                               FontSize="14"
+                               TextWrapping="Wrap"
+                               Classes="summaryMessage"
+                               Classes.over="{Binding IsOverBudget}"
+                               Text="{Binding BudgetSummaryMessage}" />
+
+                    <TextBlock Margin="0,8,0,0"
+                               Classes="subtle"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               Text="Tip: use currency values like 3200, 3200.50, or $3,200.50." />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,14">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Classes="label" Text="Theme" Margin="0,0,0,6" />
+                            <ComboBox Width="150"
+                                      ItemsSource="{Binding ThemeOptions}"
+                                      SelectedItem="{Binding SelectedThemeMode, Mode=TwoWay}" />
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
+                            <Button Content="Import"
+                                    Click="ImportBudgetClick"
+                                    Classes="toolbar"
+                                    ToolTip.Tip="Import a budget from a JSON or CSV file" />
+                            <Button Content="Export"
+                                    Click="ExportBudgetClick"
+                                    Classes="toolbar"
+                                    Margin="0"
+                                    ToolTip.Tip="Export your budget to a JSON or CSV file" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <UniformGrid Columns="2" Rows="2">
+                        <Border Classes="summary" Margin="0,0,12,12">
+                            <StackPanel>
+                                <TextBlock Classes="label" Text="Take-home pay" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyTakeHomePayDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="summary" Margin="12,0,0,12">
+                            <StackPanel>
+                                <TextBlock Classes="label" Text="Planned deductions" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalDeductionsDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="summary" Margin="0,12,12,0">
+                            <StackPanel>
+                                <TextBlock Classes="label" Text="Leftover" />
+                                <TextBlock FontSize="28"
+                                           FontWeight="SemiBold"
+                                           Classes="leftoverValue"
+                                           Classes.over="{Binding IsOverBudget}"
+                                           Text="{Binding LeftoverDisplay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="summary" Margin="12,12,0,0">
+                            <StackPanel>
+                                <TextBlock Classes="label" Text="Usage" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding BudgetUsageDisplay}" />
+                                <ProgressBar Height="8"
+                                             MinHeight="8"
+                                             Margin="0,10,0,2"
+                                             Maximum="100"
+                                             Classes.warn="{Binding UsageSeverity, Converter={StaticResource Matches}, ConverterParameter=High}"
+                                             Classes.over="{Binding UsageSeverity, Converter={StaticResource Matches}, ConverterParameter=Over}"
+                                             Value="{Binding BudgetUsagePercent, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="2" Margin="0,2,0,0">
+            <TabItem Header="Budget">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Classes="card" Margin="0,0,0,20">
+                            <Grid ColumnDefinitions="1.15*,0.85*">
+
+                                <StackPanel>
+                                    <TextBlock Classes="heading" FontSize="22" Text="Add a line item" />
+                                    <TextBlock Margin="0,8,0,18"
+                                               Classes="subtle"
+                                               FontSize="14"
+                                               TextWrapping="Wrap"
+                                               Text="Group expenses by category and watch the category chart update automatically." />
+
+                                    <Grid ColumnDefinitions="2.1*,1.2*,1*,Auto">
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Line item name" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="e.g. Rent"
+                                                     Text="{Binding NewItemName, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Category" />
+                                            <AutoCompleteBox ItemsSource="{Binding CategoryOptions}"
+                                                             Text="{Binding NewItemCategory, Mode=TwoWay}"
+                                                             FilterMode="Contains"
+                                                             MinimumPrefixLength="0" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Amount" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="0.00"
+                                                     Text="{Binding NewItemAmountText, Mode=TwoWay}"
+                                                     TextAlignment="Right" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="3"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add item"
+                                                Command="{Binding AddLineItemCommand}"
+                                                Classes="primary" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <Border Grid.Column="1"
+                                        Classes="summary"
+                                        Margin="18,0,0,0">
+                                    <StackPanel>
+                                        <TextBlock Classes="heading" FontSize="20" Text="Spending by category" />
+                                        <TextBlock Margin="0,6,0,16"
+                                                   Classes="subtle"
+                                                   FontSize="13"
+                                                   TextWrapping="Wrap"
+                                                   Text="{Binding SpendingSummaryMessage}" />
+                                        <TextBlock Classes="empty"
+                                                   IsVisible="{Binding !CategorySummaries.Count}"
+                                                   Text="Nothing to chart yet — add a line item to see category totals." />
+                                        <ItemsControl ItemsSource="{Binding CategorySummaries}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,0,0,14">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <TextBlock FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       Text="{Binding Category}" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding DetailText}" />
+                                                        </Grid>
+                                                        <ProgressBar Margin="0,8,0,0"
+                                                                     Maximum="100"
+                                                                     Classes.warn="{Binding Severity, Converter={StaticResource Matches}, ConverterParameter=High}"
+                                                                     Classes.over="{Binding Severity, Converter={StaticResource Matches}, ConverterParameter=Over}"
+                                                                     Value="{Binding ConsumptionPercent, Mode=OneWay}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Classes="card" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Classes="heading" FontSize="22" Text="Budget line items" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Classes="subtle"
+                                           FontSize="14"
+                                           TextWrapping="Wrap"
+                                           Text="Each item is assigned to a category so you can see where your money is going." />
+
+                                <StackPanel IsVisible="{Binding !LineItems.Count}">
+                                    <TextBlock Classes="subtle"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding CurrentMonthLabel, StringFormat='No line items for {0} yet — add your first expense above.'}" />
+                                    <Button Margin="0,10,0,4"
+                                            HorizontalAlignment="Left"
+                                            Content="Copy last month's plan"
+                                            Classes="toolbar"
+                                            Command="{Binding CopyPreviousMonthCommand}"
+                                            ToolTip.Tip="Copies the most recent earlier month's pay and line items into this month" />
+                                </StackPanel>
+
+                                <ItemsControl ItemsSource="{Binding LineItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Classes="row" Margin="0,0,0,12">
+                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                                                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBox Classes="inline"
+                                                                 FontSize="15"
+                                                                 FontWeight="SemiBold"
+                                                                 MinWidth="180"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,0,0,0"
+                                                                 Text="{Binding Name, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Name — click to edit" />
+                                                        <TextBox Classes="inline chip"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,4,0,0"
+                                                                 Text="{Binding Category, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Category — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" HorizontalAlignment="Right" Text="Planned" />
+                                                        <TextBox Classes="inline"
+                                                                 Width="110"
+                                                                 FontWeight="SemiBold"
+                                                                 TextAlignment="Right"
+                                                                 Text="{Binding PlannedAmountText, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Planned amount — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" HorizontalAlignment="Right" Text="Spent" />
+                                                        <TextBox Classes="inline"
+                                                                 Width="110"
+                                                                 TextAlignment="Right"
+                                                                 Text="{Binding ActualAmountText, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Total spent so far this month — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="3" Margin="18,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" Text="Add spending" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBox Classes="inline boxed"
+                                                                     Width="100"
+                                                                     TextAlignment="Right"
+                                                                     Watermark="0.00"
+                                                                     Text="{Binding SpendingText, Mode=TwoWay}"
+                                                                     ToolTip.Tip="Amount to add to this item's Spent total" />
+                                                            <Button Margin="8,0,0,0"
+                                                                    Padding="14,7"
+                                                                    Content="Add"
+                                                                    FontSize="12"
+                                                                    Classes="primary"
+                                                                    Command="{Binding $parent[ItemsControl].DataContext.RecordSpendingCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Add this amount to what you've spent on this item" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="4"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.RemoveLineItemCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Classes="danger" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Goals">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Classes="card" Margin="0,0,0,20">
+                            <Grid ColumnDefinitions="1.15*,0.85*">
+
+                                <StackPanel>
+                                    <TextBlock Classes="heading" FontSize="22" Text="Savings goals" />
+                                    <TextBlock Margin="0,8,0,6"
+                                               Classes="subtle"
+                                               FontSize="14"
+                                               TextWrapping="Wrap"
+                                               Text="Create goals, set targets, and track how close you are to reaching them." />
+                                    <TextBlock Margin="0,0,0,18"
+                                               Classes="subtle"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding LeftoverDisplay, StringFormat='Leftover this month: {0} — contribute it to a goal below.'}" />
+
+                                    <Grid ColumnDefinitions="2.2*,1.1*,1.1*,Auto">
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Goal name" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="e.g. Emergency fund"
+                                                     Text="{Binding NewGoalName, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Target" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="5,000"
+                                                     Text="{Binding NewGoalTargetAmountText, Mode=TwoWay}"
+                                                     TextAlignment="Right" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Saved so far" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="0.00"
+                                                     Text="{Binding NewGoalSavedAmountText, Mode=TwoWay}"
+                                                     TextAlignment="Right" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="3"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add goal"
+                                                Command="{Binding AddGoalCommand}"
+                                                Classes="primary" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <UniformGrid Grid.Column="1" Columns="2" Rows="2" Margin="18,0,0,0">
+                                    <Border Classes="summary" Margin="0,0,12,12">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Target total" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalGoalTargetDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="12,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Saved total" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalGoalSavedDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="0,12,12,0">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Goal progress" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding SavingsGoalProgressDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="12,12,0,0">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Goals count" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding SavingsGoals.Count}" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel>
+                                <TextBlock Classes="heading" FontSize="22" Text="Goal progress chart" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Classes="subtle"
+                                           FontSize="14"
+                                           TextWrapping="Wrap"
+                                           Text="Each goal shows a live progress bar against its target." />
+
+                                <TextBlock Classes="empty"
+                                           IsVisible="{Binding !SavingsGoals.Count}"
+                                           Text="No savings goals yet — create one above to start tracking progress." />
+
+                                <ItemsControl ItemsSource="{Binding SavingsGoals}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Classes="row" Margin="0,0,0,14">
+                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                                                    <StackPanel>
+                                                        <TextBox Classes="inline"
+                                                                 FontSize="15"
+                                                                 FontWeight="SemiBold"
+                                                                 MinWidth="180"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,0,0,0"
+                                                                 Text="{Binding Name, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Name — click to edit" />
+                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                            <TextBlock FontSize="12"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding ProgressDisplay, StringFormat='{}{0} funded'}" />
+                                                            <TextBlock FontSize="12"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding ProgressRemainingDisplay, StringFormat=' · {0} to go'}" />
+                                                        </StackPanel>
+                                                        <ProgressBar Margin="0,10,0,0"
+                                                                     Maximum="100"
+                                                                     Classes.complete="{Binding ProgressPercent, Converter={StaticResource Matches}, ConverterParameter=100}"
+                                                                     Value="{Binding ProgressPercent, Mode=OneWay}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" HorizontalAlignment="Right" Text="Saved" />
+                                                        <TextBox Classes="inline"
+                                                                 Width="110"
+                                                                 TextAlignment="Right"
+                                                                 Text="{Binding SavedAmountText, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Saved so far — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" HorizontalAlignment="Right" Text="Target" />
+                                                        <TextBox Classes="inline"
+                                                                 Width="110"
+                                                                 TextAlignment="Right"
+                                                                 Text="{Binding TargetAmountText, Mode=TwoWay}"
+                                                                 ToolTip.Tip="Target amount — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="3" Margin="18,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock Classes="mini" Text="Contribute" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBox Classes="inline boxed"
+                                                                     Width="100"
+                                                                     TextAlignment="Right"
+                                                                     Watermark="0.00"
+                                                                     Text="{Binding ContributionText, Mode=TwoWay}"
+                                                                     ToolTip.Tip="Amount to add to this goal" />
+                                                            <Button Margin="8,0,0,0"
+                                                                    Padding="14,7"
+                                                                    Content="Add"
+                                                                    FontSize="12"
+                                                                    Classes="primary"
+                                                                    Command="{Binding $parent[ItemsControl].DataContext.ContributeToGoalCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Add this amount to the goal's savings" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="4"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.RemoveGoalCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Classes="danger" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Income">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,14,0,0">
+                        <Border Classes="card" Margin="0,0,0,20">
+                            <Grid ColumnDefinitions="1.15*,0.85*">
+
+                                <StackPanel>
+                                    <TextBlock Classes="heading" FontSize="22" Text="Monthly income tracker" />
+                                    <TextBlock Margin="0,8,0,18"
+                                               Classes="subtle"
+                                               FontSize="14"
+                                               TextWrapping="Wrap"
+                                               Text="Track your monthly income over time and compare it with your budget." />
+
+                                    <Grid ColumnDefinitions="1.3*,1*,Auto">
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Month" />
+                                            <CalendarDatePicker SelectedDate="{Binding NewIncomeMonth, Mode=TwoWay}"
+                                                                SelectedDateFormat="Short"
+                                                                HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                            <TextBlock Classes="label" Text="Income" />
+                                            <TextBox Classes="modern"
+                                                     Watermark="0.00"
+                                                     Text="{Binding NewIncomeAmountText, Mode=TwoWay}"
+                                                     TextAlignment="Right" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2"
+                                                MinWidth="150"
+                                                VerticalAlignment="Bottom"
+                                                Content="Add month"
+                                                Command="{Binding AddIncomeEntryCommand}"
+                                                Classes="primary" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <UniformGrid Grid.Column="1" Columns="2" Rows="2" Margin="18,0,0,0">
+                                    <Border Classes="summary" Margin="0,0,12,12">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Records" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding IncomeEntries.Count}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="12,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Latest income" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding LatestIncomeDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="0,12,12,0">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Total tracked" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyIncomeHistoryTotalDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="summary" Margin="12,12,0,0">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Average" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyIncomeHistoryAverageDisplay}" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Classes="card" Margin="0,0,0,20">
+                            <StackPanel>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="heading" FontSize="22" Text="Income over time" />
+                                    <TextBlock Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Classes="deltaChip"
+                                               Classes.up="{Binding IncomeChangeDirection, Converter={StaticResource Matches}, ConverterParameter=Up}"
+                                               Classes.down="{Binding IncomeChangeDirection, Converter={StaticResource Matches}, ConverterParameter=Down}"
+                                               IsVisible="{Binding IncomeChangeDirection, Converter={StaticResource NotMatches}, ConverterParameter=None}"
+                                               Text="{Binding IncomeChangeDisplay}"
+                                               ToolTip.Tip="Latest month compared with the one before it" />
+                                </Grid>
+                                <TextBlock Margin="0,8,0,18"
+                                           Classes="subtle"
+                                           FontSize="14"
+                                           TextWrapping="Wrap"
+                                           Text="Each month's income plotted like a stock ticker — hover the chart to read a month's exact amount." />
+
+                                <TextBlock Classes="empty"
+                                           IsVisible="{Binding !IncomeTrendItems.Count}"
+                                           Text="No income recorded yet — add a month above to see the trend." />
+
+                                <controls:IncomeTickerChart Height="260"
+                                                            IsVisible="{Binding !!IncomeTrendItems.Count}"
+                                                            ItemsSource="{Binding IncomeTrendItems}"
+                                                            LineBrush="{DynamicResource ChartLineBrush}"
+                                                            GridLineBrush="{DynamicResource BorderBrushSoft}"
+                                                            LabelBrush="{DynamicResource TextSecondaryBrush}"
+                                                            ValueBrush="{DynamicResource TextPrimaryBrush}"
+                                                            SurfaceBrush="{DynamicResource SurfaceBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel>
+                                <TextBlock Classes="heading" FontSize="22" Text="Income records" />
+                                <TextBlock Margin="0,8,0,18"
+                                           Classes="subtle"
+                                           FontSize="14"
+                                           TextWrapping="Wrap"
+                                           Text="Use this list to manage the months you have entered." />
+
+                                <TextBlock Classes="empty"
+                                           IsVisible="{Binding !IncomeEntries.Count}"
+                                           Text="No months tracked yet." />
+
+                                <ItemsControl ItemsSource="{Binding IncomeEntries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Classes="row" Margin="0,0,0,12">
+                                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock FontSize="16"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   Text="{Binding MonthLabel}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Text="Monthly income entry" />
+                                                    </StackPanel>
+
+                                                    <TextBox Grid.Column="1"
+                                                             Margin="18,0,18,0"
+                                                             VerticalAlignment="Center"
+                                                             Width="130"
+                                                             FontSize="15"
+                                                             FontWeight="SemiBold"
+                                                             TextAlignment="Right"
+                                                             Classes="inline"
+                                                             Text="{Binding AmountText, Mode=TwoWay}"
+                                                             ToolTip.Tip="Income for this month — click to edit" />
+
+                                                    <Button Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.RemoveIncomeEntryCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="Remove"
+                                                            Classes="danger" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="3"
+                Classes="card"
+                Padding="20,14"
+                Margin="0,14,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Text="{Binding StatusMessage}" />
+                <Button Grid.Column="1"
+                        Margin="14,0,0,0"
+                        Content="Undo"
+                        Classes="toolbar"
+                        IsVisible="{Binding IsUndoAvailable}"
+                        Command="{Binding UndoRemoveCommand}"
+                        ToolTip.Tip="Restore the last removed entry" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

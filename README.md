@@ -1,6 +1,8 @@
 # Budget
 Simple easy to use budgeting app for Windows.
 
+Also available for macOS: the `macos/` folder contains a native Mac duplicate of the app with the same look, features, and data format — see [macos/README.md](macos/README.md).
+
 ## Features
 - One-screen layout with a clean modern style and Light, Dark, or System theme (the title bar follows too)
 - **Monthly budgets**: step between months with the ◀ ▶ selector — each month keeps its own take-home pay and line items
