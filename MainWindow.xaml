@@ -12,6 +12,7 @@
         MinHeight="680"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppBackgroundBrush}"
+        UseLayoutRounding="True"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="ClearType">
@@ -56,6 +57,7 @@
         <Style x:Key="ModernTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="14,10" />
@@ -70,9 +72,22 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="14"
                                 Padding="{TemplateBinding Padding}">
-                            <ScrollViewer x:Name="PART_ContentHost" />
+                            <Grid>
+                                <TextBlock x:Name="Hint"
+                                           Text="{TemplateBinding Tag}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Opacity="0.55"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed" />
+                                <ScrollViewer x:Name="PART_ContentHost" />
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -87,12 +102,13 @@
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource AccentInteractiveBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="18,12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -104,7 +120,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentBrushDark}" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentInteractiveHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentInteractiveHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.9" />
@@ -134,6 +153,9 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource DangerHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="{DynamicResource DangerHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -168,6 +190,9 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="{DynamicResource ToolbarHoverBrush}" />
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ToolbarHoverBrush}" />
+                            </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.9" />
                             </Trigger>
@@ -178,6 +203,77 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource SubtleText}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="0,2,0,6" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+
+        <Style x:Key="InlineEditBox" TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ToolTip" Value="Click to edit" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <TextBlock x:Name="Hint"
+                                           Text="{TemplateBinding Tag}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Opacity="0.55"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed" />
+                                <ScrollViewer x:Name="PART_ContentHost" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CategoryEditBox" TargetType="TextBox" BasedOn="{StaticResource InlineEditBox}">
+            <Setter Property="Background" Value="{DynamicResource ToolbarBackgroundBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="MinWidth" Value="90" />
+            <Setter Property="ToolTip" Value="Category — click to edit" />
+        </Style>
+
+        <Style x:Key="MiniLabelText" TargetType="TextBlock" BasedOn="{StaticResource SubtleText}">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,3" />
         </Style>
 
         <Style x:Key="BudgetListItem" TargetType="ListViewItem">
@@ -195,6 +291,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="20" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border Style="{StaticResource CardStyle}">
@@ -211,15 +308,68 @@
                                FontSize="15"
                                Text="Enter your monthly take-home pay, then add every recurring expense and savings goal below." />
 
-                    <StackPanel Margin="0,24,0,0" MaxWidth="420">
+                    <StackPanel Margin="0,24,0,0" HorizontalAlignment="Left">
+                        <TextBlock Style="{StaticResource LabelText}" Text="Budget month" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarButton}"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    FontSize="12"
+                                    Content="&#xE76B;"
+                                    Padding="14,12"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding PreviousMonthCommand}"
+                                    ToolTip="Previous month" />
+                            <Border MinWidth="170"
+                                    Height="42"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="14"
+                                    Padding="16,0">
+                                <TextBlock VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           Text="{Binding CurrentMonthLabel}" />
+                            </Border>
+                            <Button Style="{StaticResource ToolbarButton}"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    FontSize="12"
+                                    Content="&#xE76C;"
+                                    Padding="14,12"
+                                    Margin="8,0,0,0"
+                                    Command="{Binding NextMonthCommand}"
+                                    ToolTip="Next month" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,18,0,0" Width="420" HorizontalAlignment="Left">
                         <TextBlock Style="{StaticResource LabelText}" Text="Monthly take-home pay" />
                         <TextBox Style="{StaticResource ModernTextBox}"
                                  Text="{Binding MonthlyTakeHomePayText, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="e.g. $3,200"
                                  FontSize="18"
                                  HorizontalContentAlignment="Left" />
                     </StackPanel>
 
-                    <TextBlock Margin="0,18,0,0"
+                    <TextBlock Margin="0,16,0,0"
+                               FontSize="14"
+                               TextWrapping="Wrap"
+                               Text="{Binding BudgetSummaryMessage}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource SubtleText}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsOverBudget}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Margin="0,8,0,0"
                                Style="{StaticResource SubtleText}"
                                FontSize="13"
                                Text="Tip: use currency values like 3200, 3200.50, or $3,200.50." />
@@ -234,8 +384,15 @@
                                       SelectedItem="{Binding SelectedThemeMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
-                            <Button Content="Import" Click="ImportBudgetClick" Style="{StaticResource ToolbarButton}" />
-                            <Button Content="Export" Click="ExportBudgetClick" Style="{StaticResource ToolbarButton}" Margin="0" />
+                            <Button Content="Import"
+                                    Click="ImportBudgetClick"
+                                    Style="{StaticResource ToolbarButton}"
+                                    ToolTip="Import a budget from a JSON or CSV file" />
+                            <Button Content="Export"
+                                    Click="ExportBudgetClick"
+                                    Style="{StaticResource ToolbarButton}"
+                                    Margin="0"
+                                    ToolTip="Export your budget to a JSON or CSV file" />
                         </StackPanel>
                     </StackPanel>
 
@@ -255,13 +412,41 @@
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Leftover" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding LeftoverDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Text="{Binding LeftoverDisplay}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOverBudget}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource LabelText}" Text="Usage" />
-                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding BudgetUsageDisplay}" />
+                                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding BudgetUsageDisplay}" />
+                                <ProgressBar Height="8"
+                                             Margin="0,10,0,2"
+                                             Maximum="100"
+                                             Value="{Binding BudgetUsagePercent, Mode=OneWay}">
+                                    <ProgressBar.Style>
+                                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding UsageSeverity}" Value="High">
+                                                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding UsageSeverity}" Value="Over">
+                                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ProgressBar.Style>
+                                </ProgressBar>
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -274,7 +459,7 @@
                     BorderThickness="0"
                     Margin="0,2,0,0">
             <TabItem Header="Budget">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PreviewMouseWheel="OnTabScrollPreviewMouseWheel">
                     <StackPanel Margin="0,14,0,0">
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                             <Grid>
@@ -301,6 +486,7 @@
                                         <StackPanel Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Line item name" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="e.g. Rent"
                                                      Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" />
                                         </StackPanel>
 
@@ -315,6 +501,7 @@
                                         <StackPanel Grid.Column="2" Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Amount" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="0.00"
                                                      Text="{Binding NewItemAmountText, UpdateSourceTrigger=PropertyChanged}"
                                                      HorizontalContentAlignment="Right" />
                                         </StackPanel>
@@ -336,7 +523,19 @@
                                         <TextBlock Margin="0,6,0,16"
                                                    Style="{StaticResource SubtleText}"
                                                    FontSize="13"
-                                                   Text="Your categories are summarized as a simple bar chart." />
+                                                   TextWrapping="Wrap"
+                                                   Text="{Binding SpendingSummaryMessage}" />
+                                        <TextBlock Text="Nothing to chart yet — add a line item to see category totals.">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CategorySummaries.Count}" Value="0">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <ItemsControl ItemsSource="{Binding CategorySummaries}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -351,14 +550,24 @@
                                                                        Text="{Binding Category}" />
                                                             <TextBlock Grid.Column="1"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                       Text="{Binding DisplayAmount}" />
+                                                                       Text="{Binding DetailText}" />
                                                         </Grid>
-                                                        <ProgressBar Height="10"
-                                                                     Margin="0,8,0,0"
+                                                        <ProgressBar Margin="0,8,0,0"
                                                                      Maximum="100"
-                                                                     Value="{Binding Percent, Mode=OneWay}"
-                                                                     Foreground="{DynamicResource AccentBrush}"
-                                                                     Background="{DynamicResource BorderBrushSoft}" />
+                                                                     Value="{Binding ConsumptionPercent, Mode=OneWay}">
+                                                            <ProgressBar.Style>
+                                                                <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Severity}" Value="High">
+                                                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Severity}" Value="Over">
+                                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ProgressBar.Style>
+                                                        </ProgressBar>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -375,6 +584,29 @@
                                            Style="{StaticResource SubtleText}"
                                            FontSize="14"
                                            Text="Each item is assigned to a category so you can see where your money is going." />
+
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LineItems.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Style="{StaticResource SubtleText}"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding CurrentMonthLabel, StringFormat=No line items for {0} yet — add your first expense above.}" />
+                                    <Button Margin="0,10,0,4"
+                                            HorizontalAlignment="Left"
+                                            Content="Copy last month's plan"
+                                            Style="{StaticResource ToolbarButton}"
+                                            Command="{Binding CopyPreviousMonthCommand}"
+                                            ToolTip="Copies the most recent earlier month's pay and line items into this month" />
+                                </StackPanel>
 
                                 <ListView Background="Transparent"
                                           BorderThickness="0"
@@ -398,30 +630,39 @@
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
-                                                    <StackPanel>
-                                                        <TextBlock FontSize="16"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   Text="{Binding Name}" />
-                                                        <TextBlock Margin="0,4,0,0"
-                                                                   FontSize="12"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   Text="{Binding DisplayCategory}" />
+                                                    <StackPanel HorizontalAlignment="Left">
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 FontSize="15"
+                                                                 FontWeight="SemiBold"
+                                                                 MinWidth="180"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,0,0,0"
+                                                                 Text="{Binding Name}"
+                                                                 ToolTip="Name — click to edit" />
+                                                        <TextBox Style="{StaticResource CategoryEditBox}"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,4,0,0"
+                                                                 Text="{Binding Category}" />
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1"
-                                                               Margin="18,0,18,0"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="16"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               Text="{Binding DisplayAmount}" />
+                                                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Planned" />
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 Width="120"
+                                                                 FontWeight="SemiBold"
+                                                                 HorizontalContentAlignment="Right"
+                                                                 Text="{Binding PlannedAmountText}"
+                                                                 ToolTip="Planned amount — click to edit" />
+                                                    </StackPanel>
 
-                                                    <TextBlock Grid.Column="2"
-                                                               Margin="0,0,18,0"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               Text="Expense" />
+                                                    <StackPanel Grid.Column="2" Margin="10,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Spent" />
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 Width="120"
+                                                                 HorizontalContentAlignment="Right"
+                                                                 Text="{Binding ActualAmountText}"
+                                                                 ToolTip="Spent so far this month — click to edit" />
+                                                    </StackPanel>
 
                                                     <Button Grid.Column="3"
                                                             VerticalAlignment="Center"
@@ -437,17 +678,12 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Style="{StaticResource CardStyle}">
-                            <TextBlock FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       Text="{Binding StatusMessage}" />
-                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Goals">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PreviewMouseWheel="OnTabScrollPreviewMouseWheel">
                     <StackPanel Margin="0,14,0,0">
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                             <Grid>
@@ -458,10 +694,15 @@
 
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource HeadingText}" FontSize="22" Text="Savings goals" />
-                                    <TextBlock Margin="0,8,0,18"
+                                    <TextBlock Margin="0,8,0,6"
                                                Style="{StaticResource SubtleText}"
                                                FontSize="14"
                                                Text="Create goals, set targets, and track how close you are to reaching them." />
+                                    <TextBlock Margin="0,0,0,18"
+                                               Style="{StaticResource SubtleText}"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding LeftoverDisplay, StringFormat=Leftover this month: {0} — contribute it to a goal below.}" />
 
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -474,12 +715,14 @@
                                         <StackPanel Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Goal name" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="e.g. Emergency fund"
                                                      Text="{Binding NewGoalName, UpdateSourceTrigger=PropertyChanged}" />
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Target" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="5,000"
                                                      Text="{Binding NewGoalTargetAmountText, UpdateSourceTrigger=PropertyChanged}"
                                                      HorizontalContentAlignment="Right" />
                                         </StackPanel>
@@ -487,6 +730,7 @@
                                         <StackPanel Grid.Column="2" Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Saved so far" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="0.00"
                                                      Text="{Binding NewGoalSavedAmountText, UpdateSourceTrigger=PropertyChanged}"
                                                      HorizontalContentAlignment="Right" />
                                         </StackPanel>
@@ -510,13 +754,13 @@
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource LabelText}" Text="Saved total" />
-                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding TotalGoalSavedDisplay}" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding TotalGoalSavedDisplay}" />
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource LabelText}" Text="Goal progress" />
-                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding SavingsGoalProgressDisplay}" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding SavingsGoalProgressDisplay}" />
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
@@ -537,6 +781,18 @@
                                            FontSize="14"
                                            Text="Each goal shows a live progress bar against its target." />
 
+                                <TextBlock Text="No savings goals yet — create one above to start tracking progress.">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SavingsGoals.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
                                 <ItemsControl ItemsSource="{Binding SavingsGoals}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -551,36 +807,82 @@
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel>
-                                                        <TextBlock FontSize="16"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   Text="{Binding Name}" />
-                                                        <TextBlock Margin="0,4,0,0"
-                                                                   FontSize="12"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   Text="{Binding SavedDisplay, StringFormat=Saved {0}}" />
-                                                        <ProgressBar Height="10"
-                                                                     Margin="0,10,0,0"
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 FontSize="15"
+                                                                 FontWeight="SemiBold"
+                                                                 MinWidth="180"
+                                                                 HorizontalAlignment="Left"
+                                                                 Margin="-8,0,0,0"
+                                                                 Text="{Binding Name}"
+                                                                 ToolTip="Name — click to edit" />
+                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                            <TextBlock FontSize="12"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding ProgressDisplay, StringFormat={}{0} funded}" />
+                                                            <TextBlock FontSize="12"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Text="{Binding ProgressRemainingDisplay, StringFormat=' · {0} to go'}" />
+                                                        </StackPanel>
+                                                        <ProgressBar Margin="0,10,0,0"
                                                                      Maximum="100"
-                                                                     Value="{Binding ProgressPercent, Mode=OneWay}"
-                                                                     Foreground="{DynamicResource AccentBrush}"
-                                                                     Background="{DynamicResource BorderBrushSoft}" />
+                                                                     Value="{Binding ProgressPercent, Mode=OneWay}">
+                                                            <ProgressBar.Style>
+                                                                <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding ProgressPercent}" Value="100">
+                                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ProgressBar.Style>
+                                                        </ProgressBar>
                                                     </StackPanel>
 
-                                                    <StackPanel Grid.Column="1" Margin="18,0,18,0" VerticalAlignment="Center">
-                                                        <TextBlock HorizontalAlignment="Right"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   Text="{Binding TargetDisplay}" />
-                                                        <TextBlock Margin="0,4,0,0"
-                                                                   HorizontalAlignment="Right"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   Text="{Binding ProgressDisplay, StringFormat=Progress {0}}" />
+                                                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Saved" />
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 Width="110"
+                                                                 HorizontalContentAlignment="Right"
+                                                                 Text="{Binding SavedAmountText}"
+                                                                 ToolTip="Saved so far — click to edit" />
                                                     </StackPanel>
 
-                                                    <Button Grid.Column="2"
+                                                    <StackPanel Grid.Column="2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" HorizontalAlignment="Right" Text="Target" />
+                                                        <TextBox Style="{StaticResource InlineEditBox}"
+                                                                 Width="110"
+                                                                 HorizontalContentAlignment="Right"
+                                                                 Text="{Binding TargetAmountText}"
+                                                                 ToolTip="Target amount — click to edit" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="3" Margin="18,0,18,0" VerticalAlignment="Center">
+                                                        <TextBlock Style="{StaticResource MiniLabelText}" Text="Contribute" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBox Style="{StaticResource InlineEditBox}"
+                                                                     Width="100"
+                                                                     BorderBrush="{DynamicResource BorderBrushSoft}"
+                                                                     HorizontalContentAlignment="Right"
+                                                                     Tag="0.00"
+                                                                     Text="{Binding ContributionText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     ToolTip="Amount to add to this goal" />
+                                                            <Button Margin="8,0,0,0"
+                                                                    Padding="14,7"
+                                                                    Content="Add"
+                                                                    FontSize="12"
+                                                                    Style="{StaticResource PrimaryButton}"
+                                                                    Command="{Binding DataContext.ContributeToGoalCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip="Add this amount to the goal's savings" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="4"
                                                             VerticalAlignment="Center"
                                                             Command="{Binding DataContext.RemoveGoalCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
                                                             CommandParameter="{Binding}"
@@ -598,7 +900,7 @@
             </TabItem>
 
             <TabItem Header="Income">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PreviewMouseWheel="OnTabScrollPreviewMouseWheel">
                     <StackPanel Margin="0,14,0,0">
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                             <Grid>
@@ -629,6 +931,7 @@
                                         <StackPanel Grid.Column="1" Margin="0,0,12,0">
                                             <TextBlock Style="{StaticResource LabelText}" Text="Income" />
                                             <TextBox Style="{StaticResource ModernTextBox}"
+                                                     Tag="0.00"
                                                      Text="{Binding NewIncomeAmountText, UpdateSourceTrigger=PropertyChanged}"
                                                      HorizontalContentAlignment="Right" />
                                         </StackPanel>
@@ -652,13 +955,13 @@
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="12,0,0,12">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource LabelText}" Text="Latest income" />
-                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Text="{Binding LatestIncomeDisplay}" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding LatestIncomeDisplay}" />
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="0,12,12,0">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource LabelText}" Text="Total tracked" />
-                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding MonthlyIncomeHistoryTotalDisplay}" />
+                                            <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Text="{Binding MonthlyIncomeHistoryTotalDisplay}" />
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{StaticResource SummaryCardStyle}" Margin="12,12,0,0">
@@ -679,6 +982,18 @@
                                            FontSize="14"
                                            Text="Monthly income is shown as a simple bar chart so trends are easy to spot." />
 
+                                <TextBlock Text="No income recorded yet — add a month above to see the trend.">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IncomeTrendItems.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
                                 <ItemsControl ItemsSource="{Binding IncomeTrendItems}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -695,12 +1010,9 @@
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                                Text="{Binding DisplayAmount}" />
                                                 </Grid>
-                                                <ProgressBar Height="10"
-                                                             Margin="0,8,0,0"
+                                                <ProgressBar Margin="0,8,0,0"
                                                              Maximum="100"
-                                                             Value="{Binding Percent, Mode=OneWay}"
-                                                             Foreground="{DynamicResource AccentBrush}"
-                                                             Background="{DynamicResource BorderBrushSoft}" />
+                                                             Value="{Binding Percent, Mode=OneWay}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -715,6 +1027,18 @@
                                            Style="{StaticResource SubtleText}"
                                            FontSize="14"
                                            Text="Use this list to manage the months you have entered." />
+
+                                <TextBlock Text="No months tracked yet.">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IncomeEntries.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
 
                                 <ListView Background="Transparent"
                                           BorderThickness="0"
@@ -748,13 +1072,16 @@
                                                                    Text="Monthly income entry" />
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1"
-                                                               Margin="18,0,18,0"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="16"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               Text="{Binding DisplayAmount}" />
+                                                    <TextBox Grid.Column="1"
+                                                             Margin="18,0,18,0"
+                                                             VerticalAlignment="Center"
+                                                             Width="130"
+                                                             FontSize="15"
+                                                             FontWeight="SemiBold"
+                                                             HorizontalContentAlignment="Right"
+                                                             Style="{StaticResource InlineEditBox}"
+                                                             Text="{Binding AmountText}"
+                                                             ToolTip="Income for this month — click to edit" />
 
                                                     <Button Grid.Column="2"
                                                             VerticalAlignment="Center"
@@ -773,6 +1100,40 @@
                 </ScrollViewer>
             </TabItem>
         </TabControl>
+
+        <Border Grid.Row="3"
+                Style="{StaticResource CardStyle}"
+                Padding="20,14"
+                Margin="0,14,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Text="{Binding StatusMessage}" />
+                <Button Grid.Column="1"
+                        Margin="14,0,0,0"
+                        Content="Undo"
+                        Command="{Binding UndoRemoveCommand}"
+                        ToolTip="Restore the last removed entry">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ToolbarButton}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Setter Property="Margin" Value="14,0,0,0" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsUndoAvailable}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 

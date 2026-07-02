@@ -42,23 +42,51 @@ try
 {
     var store = new BudgetStateStore();
     var exchange = new BudgetFileExchangeService();
-    var state = new BudgetState
-    {
-        MonthlyTakeHomePayText = "$4,200.50"
-    };
 
-    state.LineItems.Add(new BudgetLineItemState
+    var june = new BudgetMonthState
+    {
+        MonthKey = "2026-06",
+        TakeHomePayText = "$4,100.00"
+    };
+    june.LineItems.Add(new BudgetLineItemState
+    {
+        Name = "Rent",
+        Category = "Housing",
+        Amount = 1500m,
+        ActualAmount = 1500m
+    });
+    june.LineItems.Add(new BudgetLineItemState
+    {
+        Name = "Internet",
+        Category = "Utilities",
+        Amount = 79.99m,
+        ActualAmount = 75.50m
+    });
+
+    var july = new BudgetMonthState
+    {
+        MonthKey = "2026-07",
+        TakeHomePayText = "$4,200.50"
+    };
+    july.LineItems.Add(new BudgetLineItemState
     {
         Name = "Rent",
         Category = "Housing",
         Amount = 1500m
     });
 
+    var state = new BudgetState
+    {
+        SelectedMonthKey = "2026-07",
+        MonthlyTakeHomePayText = "$4,200.50"
+    };
+    state.Months.Add(june);
+    state.Months.Add(july);
     state.LineItems.Add(new BudgetLineItemState
     {
-        Name = "Internet",
-        Category = "Utilities",
-        Amount = 79.99m
+        Name = "Rent",
+        Category = "Housing",
+        Amount = 1500m
     });
 
     state.SavingsGoals.Add(new SavingsGoalState
@@ -84,29 +112,52 @@ try
         throw new InvalidOperationException("TryLoad returned false.");
     }
 
-    if (loaded.MonthlyTakeHomePayText != "$4,200.50")
+    if (loaded.SelectedMonthKey != "2026-07")
     {
-        throw new InvalidOperationException($"Unexpected monthly pay: {loaded.MonthlyTakeHomePayText}");
+        throw new InvalidOperationException($"Unexpected selected month: {loaded.SelectedMonthKey}");
     }
 
-    if (loaded.LineItems.Count != 2)
+    if (loaded.Months.Count != 2)
     {
-        throw new InvalidOperationException($"Expected 2 line items, found {loaded.LineItems.Count}.");
+        throw new InvalidOperationException($"Expected 2 months, found {loaded.Months.Count}.");
     }
 
-    if (loaded.LineItems[0].Name != "Rent" || loaded.LineItems[0].Amount != 1500m)
+    var loadedJune = loaded.Months.First(m => m.MonthKey == "2026-06");
+    var loadedJuly = loaded.Months.First(m => m.MonthKey == "2026-07");
+
+    if (loadedJune.TakeHomePayText != "$4,100.00" || loadedJuly.TakeHomePayText != "$4,200.50")
     {
-        throw new InvalidOperationException("First line item did not round-trip correctly.");
+        throw new InvalidOperationException("Per-month take-home pay did not round-trip correctly.");
     }
 
-    if (loaded.LineItems[1].Name != "Internet" || loaded.LineItems[1].Amount != 79.99m)
+    if (loadedJune.LineItems.Count != 2 || loadedJuly.LineItems.Count != 1)
     {
-        throw new InvalidOperationException("Second line item did not round-trip correctly.");
+        throw new InvalidOperationException("Per-month line item counts did not round-trip correctly.");
     }
 
-    if (loaded.LineItems[0].Category != "Housing" || loaded.LineItems[1].Category != "Utilities")
+    if (loadedJune.LineItems[0].Name != "Rent" || loadedJune.LineItems[0].Amount != 1500m || loadedJune.LineItems[0].ActualAmount != 1500m)
+    {
+        throw new InvalidOperationException("First June line item did not round-trip correctly.");
+    }
+
+    if (loadedJune.LineItems[1].Amount != 79.99m || loadedJune.LineItems[1].ActualAmount != 75.50m)
+    {
+        throw new InvalidOperationException("Second June line item (planned/actual) did not round-trip correctly.");
+    }
+
+    if (loadedJune.LineItems[0].Category != "Housing" || loadedJune.LineItems[1].Category != "Utilities")
     {
         throw new InvalidOperationException("Line item categories did not round-trip correctly.");
+    }
+
+    if (loadedJuly.LineItems[0].ActualAmount != 0m)
+    {
+        throw new InvalidOperationException("July line item actual amount should default to zero.");
+    }
+
+    if (loaded.MonthlyTakeHomePayText != "$4,200.50" || loaded.LineItems.Count != 1)
+    {
+        throw new InvalidOperationException("Legacy mirror fields did not round-trip correctly.");
     }
 
     if (loaded.SavingsGoals.Count != 1 || loaded.SavingsGoals[0].Name != "Emergency Fund" || loaded.SavingsGoals[0].SavedAmount != 1200m)
@@ -131,14 +182,30 @@ try
     var importedJson = exchange.Import(jsonPath);
     var importedCsv = exchange.Import(csvPath);
 
-    if (importedJson.MonthlyTakeHomePayText != state.MonthlyTakeHomePayText || importedJson.LineItems.Count != state.LineItems.Count)
+    if (importedJson.Months.Count != 2 || importedJson.SelectedMonthKey != "2026-07")
     {
-        throw new InvalidOperationException("JSON export/import did not round-trip correctly.");
+        throw new InvalidOperationException("JSON export/import did not round-trip months correctly.");
     }
 
-    if (importedCsv.MonthlyTakeHomePayText != state.MonthlyTakeHomePayText || importedCsv.LineItems.Count != state.LineItems.Count)
+    if (importedJson.Months.First(m => m.MonthKey == "2026-06").LineItems[1].ActualAmount != 75.50m)
     {
-        throw new InvalidOperationException("CSV export/import did not round-trip correctly.");
+        throw new InvalidOperationException("JSON export/import did not round-trip actual amounts.");
+    }
+
+    if (importedCsv.Months.Count != 2)
+    {
+        throw new InvalidOperationException($"CSV export/import expected 2 months, found {importedCsv.Months.Count}.");
+    }
+
+    var csvJune = importedCsv.Months.First(m => m.MonthKey == "2026-06");
+    if (csvJune.TakeHomePayText != "$4,100.00" || csvJune.LineItems.Count != 2)
+    {
+        throw new InvalidOperationException("CSV export/import did not round-trip June correctly.");
+    }
+
+    if (csvJune.LineItems[1].Amount != 79.99m || csvJune.LineItems[1].ActualAmount != 75.50m)
+    {
+        throw new InvalidOperationException("CSV export/import did not round-trip planned/actual amounts.");
     }
 
     if (importedJson.SavingsGoals.Count != state.SavingsGoals.Count || importedJson.IncomeEntries.Count != state.IncomeEntries.Count)
@@ -149,6 +216,40 @@ try
     if (importedCsv.SavingsGoals.Count != state.SavingsGoals.Count || importedCsv.IncomeEntries.Count != state.IncomeEntries.Count)
     {
         throw new InvalidOperationException("CSV export/import lost goal or income history data.");
+    }
+
+    // Old-format files must still load: legacy JSON state (no Months property).
+    var legacyJson = """
+    {
+      "MonthlyTakeHomePayText": "$3,000.00",
+      "LineItems": [ { "Name": "Rent", "Category": "Housing", "Amount": 1200 } ],
+      "SavingsGoals": [],
+      "IncomeEntries": []
+    }
+    """;
+    File.WriteAllText(statePath, legacyJson);
+
+    if (!store.TryLoad(out var legacyLoaded))
+    {
+        throw new InvalidOperationException("Legacy JSON state failed to load.");
+    }
+
+    if (legacyLoaded.Months.Count != 0 || legacyLoaded.MonthlyTakeHomePayText != "$3,000.00" || legacyLoaded.LineItems.Count != 1 || legacyLoaded.LineItems[0].ActualAmount != 0m)
+    {
+        throw new InvalidOperationException("Legacy JSON state did not load with expected values.");
+    }
+
+    // Old-format CSV (7 columns, no MonthKey/ActualAmount on expenses) must still import.
+    var legacyCsvPath = Path.Combine(tempFolder, "legacy.csv");
+    File.WriteAllText(legacyCsvPath,
+        "Type,Name,Category,MonthKey,TargetAmount,SavedAmount,Amount\r\n" +
+        "Income,Monthly Take-Home Pay,,,,,\"$3,100.00\"\r\n" +
+        "Expense,Groceries,Food,,,,250.75\r\n");
+
+    var legacyCsv = exchange.Import(legacyCsvPath);
+    if (legacyCsv.Months.Count != 0 || legacyCsv.MonthlyTakeHomePayText != "$3,100.00" || legacyCsv.LineItems.Count != 1 || legacyCsv.LineItems[0].Amount != 250.75m)
+    {
+        throw new InvalidOperationException("Legacy CSV did not import with expected values.");
     }
 
     var placement = new WindowPlacement
@@ -229,4 +330,3 @@ finally
         File.Delete(themeSettingsBackupPath);
     }
 }
-

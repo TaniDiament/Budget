@@ -41,22 +41,38 @@ public sealed class BudgetFileExchangeService
     private static string SerializeCsv(BudgetState state)
     {
         using var writer = new StringWriter(CultureInfo.InvariantCulture);
-        writer.WriteLine("Type,Name,Category,MonthKey,TargetAmount,SavedAmount,Amount");
-        writer.WriteLine(WriteCsvRow("Income", "Monthly Take-Home Pay", string.Empty, string.Empty, string.Empty, string.Empty, state.MonthlyTakeHomePayText));
+        writer.WriteLine("Type,Name,Category,MonthKey,TargetAmount,SavedAmount,Amount,ActualAmount");
 
-        foreach (var item in state.LineItems)
+        if (state.Months.Count > 0)
         {
-            writer.WriteLine(WriteCsvRow("Expense", item.Name, item.Category, string.Empty, string.Empty, string.Empty, item.Amount.ToString(CultureInfo.InvariantCulture)));
+            foreach (var month in state.Months)
+            {
+                writer.WriteLine(WriteCsvRow("Income", "Monthly Take-Home Pay", string.Empty, month.MonthKey, string.Empty, string.Empty, month.TakeHomePayText, string.Empty));
+
+                foreach (var item in month.LineItems)
+                {
+                    writer.WriteLine(WriteCsvRow("Expense", item.Name, item.Category, month.MonthKey, string.Empty, string.Empty, item.Amount.ToString(CultureInfo.InvariantCulture), item.ActualAmount.ToString(CultureInfo.InvariantCulture)));
+                }
+            }
+        }
+        else
+        {
+            writer.WriteLine(WriteCsvRow("Income", "Monthly Take-Home Pay", string.Empty, string.Empty, string.Empty, string.Empty, state.MonthlyTakeHomePayText, string.Empty));
+
+            foreach (var item in state.LineItems)
+            {
+                writer.WriteLine(WriteCsvRow("Expense", item.Name, item.Category, string.Empty, string.Empty, string.Empty, item.Amount.ToString(CultureInfo.InvariantCulture), item.ActualAmount.ToString(CultureInfo.InvariantCulture)));
+            }
         }
 
         foreach (var goal in state.SavingsGoals)
         {
-            writer.WriteLine(WriteCsvRow("Goal", goal.Name, string.Empty, string.Empty, goal.TargetAmount.ToString(CultureInfo.InvariantCulture), goal.SavedAmount.ToString(CultureInfo.InvariantCulture), string.Empty));
+            writer.WriteLine(WriteCsvRow("Goal", goal.Name, string.Empty, string.Empty, goal.TargetAmount.ToString(CultureInfo.InvariantCulture), goal.SavedAmount.ToString(CultureInfo.InvariantCulture), string.Empty, string.Empty));
         }
 
         foreach (var entry in state.IncomeEntries)
         {
-            writer.WriteLine(WriteCsvRow("IncomeEntry", string.Empty, string.Empty, entry.MonthKey, string.Empty, string.Empty, entry.Amount.ToString(CultureInfo.InvariantCulture)));
+            writer.WriteLine(WriteCsvRow("IncomeEntry", string.Empty, string.Empty, entry.MonthKey, string.Empty, string.Empty, entry.Amount.ToString(CultureInfo.InvariantCulture), string.Empty));
         }
 
         return writer.ToString();
@@ -96,10 +112,19 @@ public sealed class BudgetFileExchangeService
             var targetText = fields.ElementAtOrDefault(4)?.Trim() ?? string.Empty;
             var savedText = fields.ElementAtOrDefault(5)?.Trim() ?? string.Empty;
             var amountText = fields.ElementAtOrDefault(6)?.Trim() ?? string.Empty;
+            var actualText = fields.ElementAtOrDefault(7)?.Trim() ?? string.Empty;
 
             if (string.Equals(type, "Income", StringComparison.OrdinalIgnoreCase))
             {
-                state.MonthlyTakeHomePayText = string.IsNullOrWhiteSpace(amountText) ? "0" : amountText;
+                var payText = string.IsNullOrWhiteSpace(amountText) ? "0" : amountText;
+                if (string.IsNullOrWhiteSpace(monthKey))
+                {
+                    state.MonthlyTakeHomePayText = payText;
+                }
+                else
+                {
+                    GetOrAddMonth(state, monthKey).TakeHomePayText = payText;
+                }
                 continue;
             }
 
@@ -170,15 +195,43 @@ public sealed class BudgetFileExchangeService
                 amount = 0m;
             }
 
-            state.LineItems.Add(new BudgetLineItemState
+            if (!decimal.TryParse(actualText, NumberStyles.Currency, CultureInfo.InvariantCulture, out var actualAmount) &&
+                !decimal.TryParse(actualText, NumberStyles.Currency, CultureInfo.CurrentCulture, out actualAmount))
+            {
+                actualAmount = 0m;
+            }
+
+            var lineItem = new BudgetLineItemState
             {
                 Name = name,
                 Category = category,
-                Amount = amount
-            });
+                Amount = amount,
+                ActualAmount = actualAmount
+            };
+
+            if (string.IsNullOrWhiteSpace(monthKey))
+            {
+                state.LineItems.Add(lineItem);
+            }
+            else
+            {
+                GetOrAddMonth(state, monthKey).LineItems.Add(lineItem);
+            }
         }
 
         return state;
+    }
+
+    private static BudgetMonthState GetOrAddMonth(BudgetState state, string monthKey)
+    {
+        var month = state.Months.FirstOrDefault(m => string.Equals(m.MonthKey, monthKey, StringComparison.OrdinalIgnoreCase));
+        if (month is null)
+        {
+            month = new BudgetMonthState { MonthKey = monthKey };
+            state.Months.Add(month);
+        }
+
+        return month;
     }
 
     private static string EscapeCsv(string value)

@@ -1,5 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Interop;
 using Budget.Models;
 using Budget.Services;
 using Budget.ViewModels;
@@ -20,6 +24,8 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         Loaded += OnLoaded;
         Closing += OnClosing;
+        SourceInitialized += OnSourceInitialized;
+        ThemeManager.ThemeApplied += OnThemeApplied;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -29,9 +35,59 @@ public partial class MainWindow : Window
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        ThemeManager.ThemeApplied -= OnThemeApplied;
         SaveWindowPlacement();
         _viewModel.SaveState();
     }
+
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        ApplyTitleBarTheme();
+    }
+
+    /// <summary>
+    /// Scrolls the tab page for every wheel event, before inner controls
+    /// (list views, inline-edit text boxes) can swallow it.
+    /// </summary>
+    private void OnTabScrollPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (e.Handled || sender is not ScrollViewer scrollViewer)
+        {
+            return;
+        }
+
+        // 16 device-independent pixels per line matches ScrollViewer's default;
+        // WheelScrollLines is negative when Windows is set to scroll a page at a time.
+        var lines = SystemParameters.WheelScrollLines;
+        var step = lines < 0
+            ? scrollViewer.ViewportHeight
+            : lines * 16.0;
+
+        scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - (e.Delta / 120.0 * step));
+        e.Handled = true;
+    }
+
+    private void OnThemeApplied(object? sender, EventArgs e)
+    {
+        ApplyTitleBarTheme();
+    }
+
+    private void ApplyTitleBarTheme()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var useDark = ThemeManager.ResolveEffectiveTheme(ThemeManager.CurrentThemeMode) == ThemeMode.Dark ? 1 : 0;
+        _ = DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref useDark, sizeof(int));
+    }
+
+    private const int DwmwaUseImmersiveDarkMode = 20;
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     private void ImportBudgetClick(object sender, RoutedEventArgs e)
     {

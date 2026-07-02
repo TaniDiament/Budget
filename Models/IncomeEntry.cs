@@ -25,17 +25,31 @@ public sealed class IncomeEntry : ObservableObject
         get => _amount;
         set
         {
-            if (SetProperty(ref _amount, value))
+            SetProperty(ref _amount, value);
+            OnPropertyChanged(nameof(AmountText));
+            OnPropertyChanged(nameof(DisplayAmount));
+        }
+    }
+
+    public string AmountText
+    {
+        get => MoneyText.Format(Amount);
+        set
+        {
+            if (MoneyText.TryParse(value, out var parsed) && parsed > 0m)
             {
-                OnPropertyChanged(nameof(DisplayAmount));
+                Amount = parsed;
+            }
+            else
+            {
+                OnPropertyChanged();
             }
         }
     }
 
     public string MonthLabel => Month.ToString("MMM yyyy", CultureInfo.CurrentCulture);
 
-    public string DisplayAmount => Amount.ToString("C", CultureInfo.CurrentCulture);
+    public string DisplayAmount => MoneyText.Format(Amount);
 
     public string SortKey => Month.ToString("yyyy-MM");
 }
-

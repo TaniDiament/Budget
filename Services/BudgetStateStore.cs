@@ -40,6 +40,7 @@ public sealed class BudgetStateStore
                 state.MonthlyTakeHomePayText = "0";
             }
             state.LineItems ??= new BudgetState().LineItems;
+            state.Months ??= new BudgetState().Months;
             state.SavingsGoals ??= new BudgetState().SavingsGoals;
             state.IncomeEntries ??= new BudgetState().IncomeEntries;
 
@@ -47,6 +48,22 @@ public sealed class BudgetStateStore
             {
                 item.Name ??= string.Empty;
                 item.Category ??= string.Empty;
+            }
+
+            foreach (var month in state.Months)
+            {
+                month.MonthKey ??= string.Empty;
+                if (string.IsNullOrWhiteSpace(month.TakeHomePayText))
+                {
+                    month.TakeHomePayText = "0";
+                }
+                month.LineItems ??= new BudgetMonthState().LineItems;
+
+                foreach (var item in month.LineItems)
+                {
+                    item.Name ??= string.Empty;
+                    item.Category ??= string.Empty;
+                }
             }
 
             foreach (var goal in state.SavingsGoals)

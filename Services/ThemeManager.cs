@@ -17,9 +17,13 @@ public static class ThemeManager
         TextSecondary: Color.FromRgb(96, 112, 139),
         Accent: Color.FromRgb(59, 130, 246),
         AccentDark: Color.FromRgb(37, 99, 235),
+        AccentSoft: Color.FromRgb(219, 234, 254),
+        AccentForeground: Color.FromRgb(255, 255, 255),
+        AccentInteractive: Color.FromRgb(37, 99, 235),
+        AccentInteractiveHover: Color.FromRgb(29, 78, 216),
         Success: Color.FromRgb(22, 163, 74),
         Warning: Color.FromRgb(245, 158, 11),
-        Danger: Color.FromRgb(220, 38, 38),
+        Danger: Color.FromRgb(153, 27, 27),
         ToolbarBackground: Color.FromRgb(226, 232, 240),
         ToolbarHover: Color.FromRgb(215, 224, 234),
         DangerBackground: Color.FromRgb(254, 226, 226),
@@ -37,13 +41,17 @@ public static class ThemeManager
         TextSecondary: Color.FromRgb(148, 163, 184),
         Accent: Color.FromRgb(96, 165, 250),
         AccentDark: Color.FromRgb(59, 130, 246),
+        AccentSoft: Color.FromRgb(30, 58, 138),
+        AccentForeground: Color.FromRgb(15, 23, 42),
+        AccentInteractive: Color.FromRgb(96, 165, 250),
+        AccentInteractiveHover: Color.FromRgb(147, 197, 253),
         Success: Color.FromRgb(74, 222, 128),
         Warning: Color.FromRgb(251, 191, 36),
         Danger: Color.FromRgb(248, 113, 113),
         ToolbarBackground: Color.FromRgb(51, 65, 85),
         ToolbarHover: Color.FromRgb(71, 85, 105),
         DangerBackground: Color.FromRgb(69, 10, 10),
-        DangerHover: Color.FromRgb(127, 29, 29),
+        DangerHover: Color.FromRgb(96, 23, 23),
         SummaryBackground: Color.FromRgb(17, 24, 39),
         StatusBackground: Color.FromRgb(15, 23, 42),
         CardShadow: Color.FromArgb(110, 0, 0, 0));
@@ -69,6 +77,10 @@ public static class ThemeManager
         ApplyBrush("TextSecondaryBrush", palette.TextSecondary);
         ApplyBrush("AccentBrush", palette.Accent);
         ApplyBrush("AccentBrushDark", palette.AccentDark);
+        ApplyBrush("AccentSoftBrush", palette.AccentSoft);
+        ApplyBrush("AccentForegroundBrush", palette.AccentForeground);
+        ApplyBrush("AccentInteractiveBrush", palette.AccentInteractive);
+        ApplyBrush("AccentInteractiveHoverBrush", palette.AccentInteractiveHover);
         ApplyBrush("SuccessBrush", palette.Success);
         ApplyBrush("WarningBrush", palette.Warning);
         ApplyBrush("DangerBrush", palette.Danger);
@@ -79,7 +91,10 @@ public static class ThemeManager
         ApplyBrush("SummaryBackgroundBrush", palette.SummaryBackground);
         ApplyBrush("StatusBackgroundBrush", palette.StatusBackground);
         Application.Current.Resources["CardShadowColor"] = palette.CardShadow;
+        ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
+
+    public static event EventHandler? ThemeApplied;
 
     public static event EventHandler? SystemThemeChanged;
 
@@ -123,6 +138,10 @@ public static class ThemeManager
         Color TextSecondary,
         Color Accent,
         Color AccentDark,
+        Color AccentSoft,
+        Color AccentForeground,
+        Color AccentInteractive,
+        Color AccentInteractiveHover,
         Color Success,
         Color Warning,
         Color Danger,

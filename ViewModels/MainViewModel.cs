@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using Budget.Infrastructure;
@@ -26,8 +27,9 @@ public sealed class MainViewModel : ObservableObject
 
     private readonly BudgetStateStore _stateStore = new();
     private readonly ThemeSettingsStore _themeSettingsStore = new();
+    private readonly Dictionary<string, BudgetMonth> _months = new();
+    private BudgetMonth _currentMonth = null!; // assigned in the constructor before any command can run
     private bool _isRestoringState;
-    private string _monthlyTakeHomePayText = "0";
     private string _newItemName = string.Empty;
     private string _newItemAmountText = string.Empty;
     private string _newItemCategory = "General";
@@ -38,6 +40,9 @@ public sealed class MainViewModel : ObservableObject
     private DateTime _newIncomeMonth = new(DateTime.Now.Year, DateTime.Now.Month, 1);
     private string _statusMessage = "Add a line item to get started.";
     private ThemeMode _selectedThemeMode;
+    private RemovedEntry? _lastRemoval;
+
+    private sealed record RemovedEntry(string Kind, object Item, int Index, string? MonthKey);
 
     public MainViewModel()
     {
@@ -47,19 +52,24 @@ public sealed class MainViewModel : ObservableObject
         RemoveGoalCommand = new RelayCommand(parameter => RemoveGoal(parameter as SavingsGoal));
         AddIncomeEntryCommand = new RelayCommand(_ => AddIncomeEntry(), _ => CanAddIncomeEntry());
         RemoveIncomeEntryCommand = new RelayCommand(parameter => RemoveIncomeEntry(parameter as IncomeEntry));
+        PreviousMonthCommand = new RelayCommand(_ => SwitchToMonth(_currentMonth.Month.AddMonths(-1)));
+        NextMonthCommand = new RelayCommand(_ => SwitchToMonth(_currentMonth.Month.AddMonths(1)));
+        CopyPreviousMonthCommand = new RelayCommand(_ => CopyPreviousMonth(), _ => CanCopyPreviousMonth());
+        UndoRemoveCommand = new RelayCommand(_ => UndoRemove());
+        ContributeToGoalCommand = new RelayCommand(parameter => ContributeToGoal(parameter as SavingsGoal));
 
         ThemeOptions = Enum.GetValues<ThemeMode>();
         CategoryOptions = new ObservableCollection<string>(DefaultCategories);
         _selectedThemeMode = _themeSettingsStore.Load().ThemeMode;
-        LineItems.CollectionChanged += OnLineItemsChanged;
         SavingsGoals.CollectionChanged += OnSavingsGoalsChanged;
         IncomeEntries.CollectionChanged += OnIncomeEntriesChanged;
+        _currentMonth = GetOrCreateMonth(DateTime.Now);
         RestoreSavedState();
         RefreshBudgetSummary();
         ThemeManager.ApplyTheme(_selectedThemeMode);
     }
 
-    public ObservableCollection<BudgetLineItem> LineItems { get; } = new();
+    public ObservableCollection<BudgetLineItem> LineItems => _currentMonth.LineItems;
 
     public ObservableCollection<SavingsGoal> SavingsGoals { get; } = new();
 
@@ -83,6 +93,16 @@ public sealed class MainViewModel : ObservableObject
 
     public RelayCommand RemoveIncomeEntryCommand { get; }
 
+    public RelayCommand PreviousMonthCommand { get; }
+
+    public RelayCommand NextMonthCommand { get; }
+
+    public RelayCommand CopyPreviousMonthCommand { get; }
+
+    public RelayCommand UndoRemoveCommand { get; }
+
+    public RelayCommand ContributeToGoalCommand { get; }
+
     public ThemeMode[] ThemeOptions { get; }
 
     public ThemeMode SelectedThemeMode
@@ -98,15 +118,23 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    public DateTime CurrentMonth => _currentMonth.Month;
+
+    public string CurrentMonthLabel => _currentMonth.Month.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
     public string MonthlyTakeHomePayText
     {
-        get => _monthlyTakeHomePayText;
+        get => _currentMonth.TakeHomePayText;
         set
         {
-            if (SetProperty(ref _monthlyTakeHomePayText, value))
+            if (_currentMonth.TakeHomePayText == value)
             {
-                RefreshBudgetSummary();
+                return;
             }
+
+            _currentMonth.TakeHomePayText = value;
+            OnPropertyChanged();
+            RefreshBudgetSummary();
         }
     }
 
@@ -200,17 +228,21 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public bool IsUndoAvailable => _lastRemoval is not null;
+
     public decimal MonthlyTakeHomePayValue => TryParseMoney(MonthlyTakeHomePayText, out var value) ? value : 0m;
 
-    public decimal TotalDeductionsValue => LineItems.Sum(item => item.Amount);
+    public decimal TotalDeductionsValue => LineItems.Sum(item => item.PlannedAmount);
+
+    public decimal TotalActualValue => LineItems.Sum(item => item.ActualAmount);
 
     public decimal LeftoverValue => MonthlyTakeHomePayValue - TotalDeductionsValue;
 
-    public string MonthlyTakeHomePayDisplay => MonthlyTakeHomePayValue.ToString("C", CultureInfo.CurrentCulture);
+    public string MonthlyTakeHomePayDisplay => MoneyText.Format(MonthlyTakeHomePayValue);
 
-    public string TotalDeductionsDisplay => TotalDeductionsValue.ToString("C", CultureInfo.CurrentCulture);
+    public string TotalDeductionsDisplay => MoneyText.Format(TotalDeductionsValue);
 
-    public string LeftoverDisplay => LeftoverValue.ToString("C", CultureInfo.CurrentCulture);
+    public string LeftoverDisplay => MoneyText.Format(LeftoverValue);
 
     public string BudgetUsageDisplay
     {
@@ -227,6 +259,42 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    public bool IsOverBudget => MonthlyTakeHomePayValue > 0m && LeftoverValue < 0m;
+
+    public double BudgetUsagePercent
+    {
+        get
+        {
+            var income = MonthlyTakeHomePayValue;
+            if (income <= 0)
+            {
+                return 0d;
+            }
+
+            return Math.Min(100d, (double)((TotalDeductionsValue / income) * 100m));
+        }
+    }
+
+    public string UsageSeverity
+    {
+        get
+        {
+            var income = MonthlyTakeHomePayValue;
+            if (income <= 0)
+            {
+                return "Normal";
+            }
+
+            var usage = (TotalDeductionsValue / income) * 100m;
+            if (usage > 100m)
+            {
+                return "Over";
+            }
+
+            return usage >= 85m ? "High" : "Normal";
+        }
+    }
+
     public string BudgetSummaryMessage
     {
         get
@@ -236,15 +304,33 @@ public sealed class MainViewModel : ObservableObject
 
             if (income <= 0)
             {
-                return "Enter your monthly take-home pay to see your available budget.";
+                return $"Enter your take-home pay for {CurrentMonthLabel} to see your available budget.";
             }
 
             if (leftover >= 0)
             {
-                return $"You have {leftover.ToString("C", CultureInfo.CurrentCulture)} left after planned expenses.";
+                return $"You have {MoneyText.Format(leftover)} left after planned expenses.";
             }
 
-            return $"You are over budget by {Math.Abs(leftover).ToString("C", CultureInfo.CurrentCulture)}.";
+            return $"You are over budget by {MoneyText.Format(Math.Abs(leftover))}.";
+        }
+    }
+
+    public string SpendingSummaryMessage
+    {
+        get
+        {
+            if (LineItems.Count == 0)
+            {
+                return "Your categories are summarized as you add line items.";
+            }
+
+            if (TotalActualValue <= 0)
+            {
+                return $"Nothing spent yet against {TotalDeductionsDisplay} planned. Edit an item's Spent box to track it.";
+            }
+
+            return $"Spent {MoneyText.Format(TotalActualValue)} of {TotalDeductionsDisplay} planned so far.";
         }
     }
 
@@ -256,17 +342,17 @@ public sealed class MainViewModel : ObservableObject
 
     public decimal MonthlyIncomeHistoryAverageValue => IncomeEntries.Count == 0 ? 0m : MonthlyIncomeHistoryTotalValue / IncomeEntries.Count;
 
-    public string TotalGoalTargetDisplay => TotalGoalTargetValue.ToString("C", CultureInfo.CurrentCulture);
+    public string TotalGoalTargetDisplay => MoneyText.Format(TotalGoalTargetValue);
 
-    public string TotalGoalSavedDisplay => TotalGoalSavedValue.ToString("C", CultureInfo.CurrentCulture);
+    public string TotalGoalSavedDisplay => MoneyText.Format(TotalGoalSavedValue);
 
-    public string MonthlyIncomeHistoryTotalDisplay => MonthlyIncomeHistoryTotalValue.ToString("C", CultureInfo.CurrentCulture);
+    public string MonthlyIncomeHistoryTotalDisplay => MoneyText.Format(MonthlyIncomeHistoryTotalValue);
 
-    public string MonthlyIncomeHistoryAverageDisplay => MonthlyIncomeHistoryAverageValue.ToString("C", CultureInfo.CurrentCulture);
+    public string MonthlyIncomeHistoryAverageDisplay => MoneyText.Format(MonthlyIncomeHistoryAverageValue);
 
     public string LatestIncomeDisplay => IncomeEntries
         .OrderBy(entry => entry.SortKey)
-        .LastOrDefault()?.DisplayAmount ?? 0m.ToString("C", CultureInfo.CurrentCulture);
+        .LastOrDefault()?.DisplayAmount ?? MoneyText.Format(0m);
 
     public string SavingsGoalProgressDisplay
     {
@@ -279,6 +365,69 @@ public sealed class MainViewModel : ObservableObject
 
             return $"{(TotalGoalSavedValue / TotalGoalTargetValue) * 100m:0}%";
         }
+    }
+
+    private void SwitchToMonth(DateTime target)
+    {
+        _currentMonth = GetOrCreateMonth(target);
+        OnPropertyChanged(nameof(LineItems));
+        OnPropertyChanged(nameof(MonthlyTakeHomePayText));
+        OnPropertyChanged(nameof(CurrentMonth));
+        OnPropertyChanged(nameof(CurrentMonthLabel));
+        RefreshBudgetSummary();
+    }
+
+    private BudgetMonth GetOrCreateMonth(DateTime month)
+    {
+        var key = new DateTime(month.Year, month.Month, 1).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        if (!_months.TryGetValue(key, out var budgetMonth))
+        {
+            budgetMonth = new BudgetMonth(month);
+            budgetMonth.LineItems.CollectionChanged += OnLineItemsChanged;
+            _months[key] = budgetMonth;
+        }
+
+        return budgetMonth;
+    }
+
+    private BudgetMonth? FindNearestEarlierMonthWithItems()
+    {
+        return _months.Values
+            .Where(month => month.Month < _currentMonth.Month && month.LineItems.Count > 0)
+            .OrderByDescending(month => month.Month)
+            .FirstOrDefault();
+    }
+
+    private bool CanCopyPreviousMonth()
+    {
+        return LineItems.Count == 0 && FindNearestEarlierMonthWithItems() is not null;
+    }
+
+    private void CopyPreviousMonth()
+    {
+        var source = FindNearestEarlierMonthWithItems();
+        if (source is null || LineItems.Count > 0)
+        {
+            return;
+        }
+
+        _isRestoringState = true;
+        try
+        {
+            _currentMonth.TakeHomePayText = source.TakeHomePayText;
+            foreach (var item in source.LineItems)
+            {
+                LineItems.Add(new BudgetLineItem(item.Name, item.Category, item.PlannedAmount));
+            }
+        }
+        finally
+        {
+            _isRestoringState = false;
+        }
+
+        OnPropertyChanged(nameof(MonthlyTakeHomePayText));
+        StatusMessage = $"Copied the {source.Month.ToString("MMMM yyyy", CultureInfo.CurrentCulture)} plan into {CurrentMonthLabel}. Spent amounts start fresh.";
+        RefreshBudgetSummary();
     }
 
     private void AddLineItem()
@@ -296,8 +445,7 @@ public sealed class MainViewModel : ObservableObject
         NewItemName = string.Empty;
         NewItemAmountText = string.Empty;
         NewItemCategory = category;
-        StatusMessage = $"Added {item.Name}.";
-        RefreshBudgetSummary();
+        StatusMessage = $"Added {item.Name} to {CurrentMonthLabel}.";
     }
 
     private void RemoveLineItem(BudgetLineItem? item)
@@ -307,10 +455,11 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        var index = LineItems.IndexOf(item);
         if (LineItems.Remove(item))
         {
+            SetLastRemoval(new RemovedEntry("LineItem", item, index, _currentMonth.MonthKey));
             StatusMessage = $"Removed {item.Name}.";
-            RefreshBudgetSummary();
         }
     }
 
@@ -334,7 +483,6 @@ public sealed class MainViewModel : ObservableObject
         NewGoalTargetAmountText = string.Empty;
         NewGoalSavedAmountText = string.Empty;
         StatusMessage = $"Added savings goal {goal.Name}.";
-        RefreshBudgetSummary();
     }
 
     private void RemoveGoal(SavingsGoal? goal)
@@ -344,11 +492,30 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        var index = SavingsGoals.IndexOf(goal);
         if (SavingsGoals.Remove(goal))
         {
+            SetLastRemoval(new RemovedEntry("Goal", goal, index, null));
             StatusMessage = $"Removed savings goal {goal.Name}.";
-            RefreshBudgetSummary();
         }
+    }
+
+    private void ContributeToGoal(SavingsGoal? goal)
+    {
+        if (goal is null)
+        {
+            return;
+        }
+
+        if (!TryParseMoney(goal.ContributionText, out var amount) || amount <= 0m)
+        {
+            StatusMessage = "Enter a contribution amount above zero first.";
+            return;
+        }
+
+        goal.SavedAmount += amount;
+        goal.ContributionText = string.Empty;
+        StatusMessage = $"Added {MoneyText.Format(amount)} to {goal.Name}.";
     }
 
     private void AddIncomeEntry()
@@ -378,7 +545,6 @@ public sealed class MainViewModel : ObservableObject
         }
 
         NewIncomeAmountText = string.Empty;
-        RefreshBudgetSummary();
     }
 
     private void RemoveIncomeEntry(IncomeEntry? entry)
@@ -388,11 +554,52 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        var index = IncomeEntries.IndexOf(entry);
         if (IncomeEntries.Remove(entry))
         {
+            SetLastRemoval(new RemovedEntry("Income", entry, index, null));
             StatusMessage = $"Removed income for {entry.MonthLabel}.";
-            RefreshBudgetSummary();
         }
+    }
+
+    private void SetLastRemoval(RemovedEntry? entry)
+    {
+        _lastRemoval = entry;
+        OnPropertyChanged(nameof(IsUndoAvailable));
+    }
+
+    private void UndoRemove()
+    {
+        var removal = _lastRemoval;
+        if (removal is null)
+        {
+            return;
+        }
+
+        switch (removal.Kind)
+        {
+            case "LineItem" when removal.Item is BudgetLineItem item:
+                if (removal.MonthKey is not null &&
+                    TryParseMonthKey(removal.MonthKey, out var month) &&
+                    GetOrCreateMonth(month) != _currentMonth)
+                {
+                    SwitchToMonth(month);
+                }
+
+                LineItems.Insert(Math.Min(removal.Index < 0 ? 0 : removal.Index, LineItems.Count), item);
+                StatusMessage = $"Restored {item.Name}.";
+                break;
+            case "Goal" when removal.Item is SavingsGoal goal:
+                SavingsGoals.Insert(Math.Min(removal.Index < 0 ? 0 : removal.Index, SavingsGoals.Count), goal);
+                StatusMessage = $"Restored savings goal {goal.Name}.";
+                break;
+            case "Income" when removal.Item is IncomeEntry entry:
+                IncomeEntries.Insert(Math.Min(removal.Index < 0 ? 0 : removal.Index, IncomeEntries.Count), entry);
+                StatusMessage = $"Restored income for {entry.MonthLabel}.";
+                break;
+        }
+
+        SetLastRemoval(null);
     }
 
     public bool SaveState()
@@ -415,21 +622,44 @@ public sealed class MainViewModel : ObservableObject
         _isRestoringState = true;
         try
         {
-            MonthlyTakeHomePayText = string.IsNullOrWhiteSpace(state.MonthlyTakeHomePayText)
-                ? "0"
-                : state.MonthlyTakeHomePayText;
+            DetachAll();
+            _months.Clear();
 
-            LineItems.Clear();
-            foreach (var item in state.LineItems ?? Enumerable.Empty<BudgetLineItemState>())
+            if (state.Months is { Count: > 0 })
             {
-                if (string.IsNullOrWhiteSpace(item.Name))
+                foreach (var monthState in state.Months)
                 {
-                    continue;
-                }
+                    if (!TryParseMonthKey(monthState.MonthKey, out var monthDate))
+                    {
+                        continue;
+                    }
 
-                var category = NormalizeCategory(item.Category);
-                EnsureCategoryOption(category);
-                LineItems.Add(new BudgetLineItem(item.Name.Trim(), category, item.Amount));
+                    var month = GetOrCreateMonth(monthDate);
+                    month.TakeHomePayText = string.IsNullOrWhiteSpace(monthState.TakeHomePayText)
+                        ? "0"
+                        : monthState.TakeHomePayText;
+                    AddLineItemsFromState(month, monthState.LineItems);
+                }
+            }
+            else
+            {
+                var monthDate = TryParseMonthKey(state.SelectedMonthKey, out var parsed) ? parsed : DateTime.Now;
+                var month = GetOrCreateMonth(monthDate);
+                month.TakeHomePayText = string.IsNullOrWhiteSpace(state.MonthlyTakeHomePayText)
+                    ? "0"
+                    : state.MonthlyTakeHomePayText;
+                AddLineItemsFromState(month, state.LineItems);
+            }
+
+            if (TryParseMonthKey(state.SelectedMonthKey, out var selected) &&
+                _months.ContainsKey(selected.ToString("yyyy-MM", CultureInfo.InvariantCulture)))
+            {
+                _currentMonth = GetOrCreateMonth(selected);
+            }
+            else
+            {
+                var latest = _months.Values.OrderBy(month => month.Month).LastOrDefault();
+                _currentMonth = latest ?? GetOrCreateMonth(DateTime.Now);
             }
 
             SavingsGoals.Clear();
@@ -463,12 +693,57 @@ public sealed class MainViewModel : ObservableObject
                 });
             }
 
-            StatusMessage = statusMessage ?? $"Restored {LineItems.Count} line item{(LineItems.Count == 1 ? string.Empty : "s")}, {SavingsGoals.Count} goal{(SavingsGoals.Count == 1 ? string.Empty : "s")}, and {IncomeEntries.Count} income record{(IncomeEntries.Count == 1 ? string.Empty : "s")} from your last session.";
+            SetLastRemoval(null);
+
+            var itemCount = _months.Values.Sum(month => month.LineItems.Count);
+            StatusMessage = statusMessage ?? $"Restored {itemCount} line item{(itemCount == 1 ? string.Empty : "s")}, {SavingsGoals.Count} goal{(SavingsGoals.Count == 1 ? string.Empty : "s")}, and {IncomeEntries.Count} income record{(IncomeEntries.Count == 1 ? string.Empty : "s")} from your last session.";
         }
         finally
         {
             _isRestoringState = false;
+            OnPropertyChanged(nameof(LineItems));
+            OnPropertyChanged(nameof(MonthlyTakeHomePayText));
+            OnPropertyChanged(nameof(CurrentMonth));
+            OnPropertyChanged(nameof(CurrentMonthLabel));
             RefreshBudgetSummary();
+        }
+    }
+
+    private void AddLineItemsFromState(BudgetMonth month, IEnumerable<BudgetLineItemState>? items)
+    {
+        foreach (var item in items ?? Enumerable.Empty<BudgetLineItemState>())
+        {
+            if (string.IsNullOrWhiteSpace(item.Name))
+            {
+                continue;
+            }
+
+            var category = NormalizeCategory(item.Category);
+            EnsureCategoryOption(category);
+            month.LineItems.Add(new BudgetLineItem(item.Name.Trim(), category, item.Amount, item.ActualAmount));
+        }
+    }
+
+    private void DetachAll()
+    {
+        foreach (var month in _months.Values)
+        {
+            foreach (var item in month.LineItems)
+            {
+                item.PropertyChanged -= OnLineItemPropertyChanged;
+            }
+
+            month.LineItems.CollectionChanged -= OnLineItemsChanged;
+        }
+
+        foreach (var goal in SavingsGoals)
+        {
+            goal.PropertyChanged -= OnGoalPropertyChanged;
+        }
+
+        foreach (var entry in IncomeEntries)
+        {
+            entry.PropertyChanged -= OnIncomeEntryPropertyChanged;
         }
     }
 
@@ -493,29 +768,131 @@ public sealed class MainViewModel : ObservableObject
 
     private void OnLineItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.NewItems is not null)
+        {
+            foreach (var item in e.NewItems.OfType<BudgetLineItem>())
+            {
+                item.PropertyChanged += OnLineItemPropertyChanged;
+            }
+        }
+
+        if (e.OldItems is not null)
+        {
+            foreach (var item in e.OldItems.OfType<BudgetLineItem>())
+            {
+                item.PropertyChanged -= OnLineItemPropertyChanged;
+            }
+        }
+
         RefreshBudgetSummary();
+    }
+
+    private void OnLineItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isRestoringState)
+        {
+            return;
+        }
+
+        if (e.PropertyName == nameof(BudgetLineItem.Category) && sender is BudgetLineItem item)
+        {
+            EnsureCategoryOption(item.Category);
+        }
+
+        if (e.PropertyName is nameof(BudgetLineItem.Name)
+            or nameof(BudgetLineItem.Category)
+            or nameof(BudgetLineItem.PlannedAmount)
+            or nameof(BudgetLineItem.ActualAmount))
+        {
+            RefreshBudgetSummary();
+        }
     }
 
     private void OnSavingsGoalsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.NewItems is not null)
+        {
+            foreach (var goal in e.NewItems.OfType<SavingsGoal>())
+            {
+                goal.PropertyChanged += OnGoalPropertyChanged;
+            }
+        }
+
+        if (e.OldItems is not null)
+        {
+            foreach (var goal in e.OldItems.OfType<SavingsGoal>())
+            {
+                goal.PropertyChanged -= OnGoalPropertyChanged;
+            }
+        }
+
         RefreshBudgetSummary();
+    }
+
+    private void OnGoalPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isRestoringState)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(SavingsGoal.Name)
+            or nameof(SavingsGoal.TargetAmount)
+            or nameof(SavingsGoal.SavedAmount))
+        {
+            RefreshBudgetSummary();
+        }
     }
 
     private void OnIncomeEntriesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.NewItems is not null)
+        {
+            foreach (var entry in e.NewItems.OfType<IncomeEntry>())
+            {
+                entry.PropertyChanged += OnIncomeEntryPropertyChanged;
+            }
+        }
+
+        if (e.OldItems is not null)
+        {
+            foreach (var entry in e.OldItems.OfType<IncomeEntry>())
+            {
+                entry.PropertyChanged -= OnIncomeEntryPropertyChanged;
+            }
+        }
+
         RefreshBudgetSummary();
+    }
+
+    private void OnIncomeEntryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isRestoringState)
+        {
+            return;
+        }
+
+        if (e.PropertyName == nameof(IncomeEntry.Amount))
+        {
+            RefreshBudgetSummary();
+        }
     }
 
     private void RefreshBudgetSummary()
     {
         OnPropertyChanged(nameof(MonthlyTakeHomePayValue));
         OnPropertyChanged(nameof(TotalDeductionsValue));
+        OnPropertyChanged(nameof(TotalActualValue));
         OnPropertyChanged(nameof(LeftoverValue));
         OnPropertyChanged(nameof(MonthlyTakeHomePayDisplay));
         OnPropertyChanged(nameof(TotalDeductionsDisplay));
         OnPropertyChanged(nameof(LeftoverDisplay));
         OnPropertyChanged(nameof(BudgetUsageDisplay));
+        OnPropertyChanged(nameof(IsOverBudget));
+        OnPropertyChanged(nameof(BudgetUsagePercent));
+        OnPropertyChanged(nameof(UsageSeverity));
         OnPropertyChanged(nameof(BudgetSummaryMessage));
+        OnPropertyChanged(nameof(SpendingSummaryMessage));
         OnPropertyChanged(nameof(TotalGoalTargetValue));
         OnPropertyChanged(nameof(TotalGoalSavedValue));
         OnPropertyChanged(nameof(MonthlyIncomeHistoryTotalValue));
@@ -531,6 +908,7 @@ public sealed class MainViewModel : ObservableObject
         AddLineItemCommand.RaiseCanExecuteChanged();
         AddGoalCommand.RaiseCanExecuteChanged();
         AddIncomeEntryCommand.RaiseCanExecuteChanged();
+        CopyPreviousMonthCommand.RaiseCanExecuteChanged();
 
         if (!_isRestoringState)
         {
@@ -552,17 +930,35 @@ public sealed class MainViewModel : ObservableObject
     {
         CategorySummaries.Clear();
 
+        var income = MonthlyTakeHomePayValue;
         var totals = LineItems
             .GroupBy(item => string.IsNullOrWhiteSpace(item.Category) ? "General" : item.Category.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(group => new { Category = group.Key, Amount = group.Sum(item => item.Amount) })
-            .OrderByDescending(group => group.Amount)
+            .Select(group => new
+            {
+                Category = group.Key,
+                Planned = group.Sum(item => item.PlannedAmount),
+                Actual = group.Sum(item => item.ActualAmount)
+            })
+            .OrderByDescending(group => group.Planned)
             .ToList();
 
-        var max = totals.Count == 0 ? 0m : totals.Max(item => item.Amount);
-        foreach (var item in totals)
+        foreach (var total in totals)
         {
-            var percent = max <= 0 ? 0d : (double)((item.Amount / max) * 100m);
-            CategorySummaries.Add(new CategorySummaryItem(item.Category, item.Amount, percent));
+            var consumption = total.Planned > 0m
+                ? (double)((total.Actual / total.Planned) * 100m)
+                : total.Actual > 0m ? 100d : 0d;
+            var percent = Math.Min(100d, consumption);
+            var severity = (total.Planned <= 0m && total.Actual > 0m) || total.Actual > total.Planned
+                ? "Over"
+                : consumption >= 85d ? "High" : "Normal";
+
+            var detail = $"{MoneyText.Format(total.Actual)} of {MoneyText.Format(total.Planned)}";
+            if (income > 0m && total.Planned > 0m)
+            {
+                detail += $" · {(total.Planned / income) * 100m:0}% of pay";
+            }
+
+            CategorySummaries.Add(new CategorySummaryItem(total.Category, total.Planned, total.Actual, percent, severity, detail));
         }
     }
 
@@ -599,15 +995,37 @@ public sealed class MainViewModel : ObservableObject
 
     private BudgetState CaptureState()
     {
+        var months = _months.Values
+            .Where(month => month == _currentMonth
+                            || month.LineItems.Count > 0
+                            || (TryParseMoney(month.TakeHomePayText, out var pay) && pay > 0m))
+            .OrderBy(month => month.Month)
+            .Select(month => new BudgetMonthState
+            {
+                MonthKey = month.MonthKey,
+                TakeHomePayText = month.TakeHomePayText,
+                LineItems = new ObservableCollection<BudgetLineItemState>(
+                    month.LineItems.Select(item => new BudgetLineItemState
+                    {
+                        Name = item.Name,
+                        Category = item.Category,
+                        Amount = item.PlannedAmount,
+                        ActualAmount = item.ActualAmount
+                    }))
+            });
+
         return new BudgetState
         {
-            MonthlyTakeHomePayText = MonthlyTakeHomePayText,
+            SelectedMonthKey = _currentMonth.MonthKey,
+            Months = new ObservableCollection<BudgetMonthState>(months),
+            MonthlyTakeHomePayText = _currentMonth.TakeHomePayText,
             LineItems = new ObservableCollection<BudgetLineItemState>(
                 LineItems.Select(item => new BudgetLineItemState
                 {
                     Name = item.Name,
                     Category = item.Category,
-                    Amount = item.Amount
+                    Amount = item.PlannedAmount,
+                    ActualAmount = item.ActualAmount
                 })),
             SavingsGoals = new ObservableCollection<SavingsGoalState>(
                 SavingsGoals.Select(goal => new SavingsGoalState
@@ -645,21 +1063,11 @@ public sealed class MainViewModel : ObservableObject
 
     private static bool TryParseMoney(string? text, out decimal value)
     {
-        return decimal.TryParse(
-            text,
-            NumberStyles.Currency,
-            CultureInfo.CurrentCulture,
-            out value);
+        return MoneyText.TryParse(text, out value);
     }
 
     private static decimal ParseMoney(string text)
     {
-        if (TryParseMoney(text, out var value))
-        {
-            return value;
-        }
-
-        return 0m;
+        return TryParseMoney(text, out var value) ? value : 0m;
     }
 }
-
