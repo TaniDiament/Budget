@@ -57,3 +57,9 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Xcode (mac/ native Swift app)
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
